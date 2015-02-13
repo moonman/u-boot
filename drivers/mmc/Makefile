@@ -19,6 +19,7 @@ obj-$(CONFIG_GENERIC_ATMEL_MCI) += gen_atmel_mci.o
 obj-$(CONFIG_KONA_SDHCI) += kona_sdhci.o
 obj-$(CONFIG_MMC_SPI) += mmc_spi.o
 obj-$(CONFIG_MMC_SUNXI) += sunxi_mmc.o
+obj-$(CONFIG_KIRKWOOD_MMC) += kirkwood_mmc.o
 obj-$(CONFIG_MV_SDHCI) += mv_sdhci.o
 obj-$(CONFIG_MVEBU_MMC) += mvebu_mmc.o
 obj-$(CONFIG_MXC_MMC) += mxcmmc.o
