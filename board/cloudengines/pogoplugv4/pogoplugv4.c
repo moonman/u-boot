@@ -165,7 +165,7 @@ static void set_leds(u32 leds, u32 blinking)
 	u32 oe;
 	u32 bl;
 
-	r = (struct kwgpio_registers *)KW_GPIO0_BASE;
+	r = (struct kwgpio_registers *)MVEBU_GPIO0_BASE;
 	oe = readl(&r->oe) | BOTH_LEDS;
 	writel(oe & ~leds, &r->oe);	/* active low */
 	bl = readl(&r->blink_en) & ~BOTH_LEDS;

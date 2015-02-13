@@ -41,7 +41,6 @@
  * High Level Configuration Options (easy to change)
  */
 #define CONFIG_FEROCEON_88FR131		/* #define CPU Core subversion */
-#define CONFIG_KIRKWOOD			/* SOC Family Name */
 #define CONFIG_KW88F6192		/* SOC Name */
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* disable board lowlevel_init */
 
@@ -108,7 +107,6 @@
 	"mtdparts=orion_nand:1M(u-boot),-(rootfs)\0"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-
 	"console=ttyS0\0" \
 	"mtdids=nand0=orion_nand\0" \
 	"mtdparts="CONFIG_MTDPARTS \
