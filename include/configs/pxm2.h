@@ -21,7 +21,7 @@
 #include "siemens-am33x-common.h"
 
 #define CONFIG_SYS_MPUCLK	720
-#define DXR2_IOCTRL_VAL		0x18b
+#define DDR_IOCTRL_VAL		0x18b
 #define DDR_PLL_FREQ		266
 
 #define BOARD_DFU_BUTTON_GPIO	59
@@ -148,6 +148,10 @@
 #define PWM_DUTY	0x200
 #define CONFIG_SYS_CONSOLE_BG_COL	0xff
 #define CONFIG_SYS_CONSOLE_FG_COL	0x00
+#endif
+
+#ifndef CONFIG_SPL_BUILD
+#define CONFIG_FIT
 #endif
 
 #endif	/* ! __CONFIG_PXM2_H */

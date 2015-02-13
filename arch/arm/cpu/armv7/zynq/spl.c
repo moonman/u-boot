@@ -8,7 +8,7 @@
 
 #include <asm/io.h>
 #include <asm/arch/hardware.h>
-#include <asm/arch/spl.h>
+#include <asm/spl.h>
 #include <asm/arch/sys_proto.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -27,6 +27,13 @@ void board_init_f(ulong dummy)
 	arch_cpu_init();
 	board_init_r(NULL, 0);
 }
+
+#ifdef CONFIG_SPL_BOARD_INIT
+void spl_board_init(void)
+{
+	board_init();
+}
+#endif
 
 u32 spl_boot_device(void)
 {
@@ -56,7 +63,7 @@ u32 spl_boot_device(void)
 #ifdef CONFIG_SPL_MMC_SUPPORT
 u32 spl_boot_mode(void)
 {
-	return MMCSD_MODE_FAT;
+	return MMCSD_MODE_FS;
 }
 #endif
 
@@ -67,3 +74,11 @@ int spl_start_uboot(void)
 	return 0;
 }
 #endif
+
+__weak void ps7_init(void)
+{
+	/*
+	 * This function is overridden by the one in
+	 * board/xilinx/zynq/ps7_init.c, if it exists.
+	 */
+}

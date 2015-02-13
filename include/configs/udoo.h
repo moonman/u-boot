@@ -26,6 +26,8 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_REVISION_TAG
 
+#define CONFIG_SYS_GENERIC_BOARD
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(2 * SZ_1M)
 
@@ -189,7 +191,6 @@
 /* Miscellaneous configurable options */
 #define CONFIG_SYS_LONGHELP
 #define CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT	       "=> "
 #define CONFIG_AUTO_COMPLETE
 #define CONFIG_SYS_CBSIZE		256
 

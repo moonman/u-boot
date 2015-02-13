@@ -43,7 +43,6 @@
 /*===================*/
 /* SoC Configuration */
 /*===================*/
-#define CONFIG_ARM926EJS			/* arm926ejs CPU core */
 #define CONFIG_SYS_TIMERBASE		0x01c21400	/* use timer 0 */
 #define CONFIG_SYS_HZ_CLOCK		27000000	/* Timer Input clock freq */
 #define CONFIG_SOC_DM644X
@@ -78,10 +77,10 @@
 /*===================*/
 /* I2C Configuration */
 /*===================*/
-#define CONFIG_HARD_I2C
-#define CONFIG_DRIVER_DAVINCI_I2C
-#define CONFIG_SYS_I2C_SPEED		80000	/* 100Kbps won't work, silicon bug */
-#define CONFIG_SYS_I2C_SLAVE		10	/* Bogus, master-only in U-Boot */
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_DAVINCI
+#define CONFIG_SYS_DAVINCI_I2C_SPEED 80000 /* 100Kbps won't work, silicon bug */
+#define CONFIG_SYS_DAVINCI_I2C_SLAVE 10    /* Bogus, master-only in U-Boot */
 /*==================================*/
 /* Network & Ethernet Configuration */
 /*==================================*/

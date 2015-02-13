@@ -16,7 +16,6 @@
 #include <asm/arch/imx-regs.h>
 
  /* High Level Configuration Options */
-#define CONFIG_ARM1136	/* This is an arm1136 CPU core */
 #define CONFIG_MX35
 
 #define CONFIG_DISPLAY_CPUINFO
@@ -52,7 +51,7 @@
 #define CONFIG_POWER
 #define CONFIG_POWER_I2C
 #define CONFIG_POWER_FSL
-#define CONFIG_PMIC_FSL_MC13892
+#define CONFIG_POWER_FSL_MC13892
 #define CONFIG_SYS_FSL_PMIC_I2C_ADDR	0x08
 #define CONFIG_RTC_MC13XXX
 

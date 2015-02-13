@@ -20,6 +20,7 @@
 
 #include "../common/qixis.h"
 #include "../common/vsc3316_3308.h"
+#include "../common/vid.h"
 #include "t208xqds.h"
 #include "t208xqds_qixis.h"
 
@@ -86,6 +87,11 @@ int select_i2c_ch_pca9547(u8 ch)
 	return 0;
 }
 
+int i2c_multiplexer_select_vid_channel(u8 channel)
+{
+	return select_i2c_ch_pca9547(channel);
+}
+
 int brd_mux_lane_to_slot(void)
 {
 	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
@@ -105,6 +111,7 @@ int brd_mux_lane_to_slot(void)
 		/* SerDes1 is not enabled */
 		break;
 #if defined(CONFIG_T2080QDS)
+	case 0x1b:
 	case 0x1c:
 	case 0xa2:
 		/* SD1(A:D) => SLOT3 SGMII
@@ -126,6 +133,7 @@ int brd_mux_lane_to_slot(void)
 		 */
 		QIXIS_WRITE(brdcfg[12], 0x3a);
 		break;
+	case 0x50:
 	case 0x51:
 		/* SD1(A:D) => SLOT3 XAUI
 		 * SD1(E)   => SLOT1 PCIe4
@@ -140,6 +148,7 @@ int brd_mux_lane_to_slot(void)
 		 */
 		QIXIS_WRITE(brdcfg[12], 0xfe);
 		break;
+	case 0x6a:
 	case 0x6b:
 		/* SD1(A:D) => XFI cage
 		 * SD1(E)   => SLOT1 PCIe4
@@ -184,6 +193,7 @@ int brd_mux_lane_to_slot(void)
 		 QIXIS_WRITE(brdcfg[12], 0x1a);
 		 break;
 #elif defined(CONFIG_T2081QDS)
+	case 0x50:
 	case 0x51:
 		/* SD1(A:D) => SLOT2 XAUI
 		 * SD1(E)   => SLOT1 PCIe4 x1
@@ -192,6 +202,7 @@ int brd_mux_lane_to_slot(void)
 		QIXIS_WRITE(brdcfg[12], 0x98);
 		QIXIS_WRITE(brdcfg[13], 0x70);
 		break;
+	case 0x6a:
 	case 0x6b:
 		/* SD1(A:D) => XFI SFP Module
 		 * SD1(E)   => SLOT1 PCIe4 x1
@@ -201,13 +212,6 @@ int brd_mux_lane_to_slot(void)
 		QIXIS_WRITE(brdcfg[13], 0x70);
 		break;
 	case 0x6c:
-		/* SD1(A:B) => XFI SFP Module
-		 * SD1(C:D) => SLOT2 SGMII
-		 * SD1(E:H) => SLOT1 PCIe4 x4
-		 */
-		QIXIS_WRITE(brdcfg[12], 0xe8);
-		QIXIS_WRITE(brdcfg[13], 0x0);
-		break;
 	case 0x6d:
 		/* SD1(A:B) => XFI SFP Module
 		 * SD1(C:D) => SLOT2 SGMII
@@ -328,7 +332,7 @@ int brd_mux_lane_to_slot(void)
 int board_early_init_r(void)
 {
 	const unsigned int flashbase = CONFIG_SYS_FLASH_BASE;
-	const u8 flash_esel = find_tlb_idx((void *)flashbase, 1);
+	int flash_esel = find_tlb_idx((void *)flashbase, 1);
 
 	/*
 	 * Remap Boot flash + PROMJET region to caching-inhibited
@@ -339,8 +343,14 @@ int board_early_init_r(void)
 	flush_dcache();
 	invalidate_icache();
 
-	/* invalidate existing TLB entry for flash + promjet */
-	disable_tlb(flash_esel);
+	if (flash_esel == -1) {
+		/* very unlikely unless something is messed up */
+		puts("Error: Could not find TLB for FLASH BASE\n");
+		flash_esel = 2;	/* give our best effort to continue */
+	} else {
+		/* invalidate existing TLB entry for flash + promjet */
+		disable_tlb(flash_esel);
+	}
 
 	set_tlb(1, flashbase, CONFIG_SYS_FLASH_BASE_PHYS,
 		MAS3_SX|MAS3_SW|MAS3_SR, MAS2_I|MAS2_G,
@@ -353,6 +363,13 @@ int board_early_init_r(void)
 
 	/* Disable remote I2C connection to qixis fpga */
 	QIXIS_WRITE(brdcfg[5], QIXIS_READ(brdcfg[5]) & ~BRDCFG5_IRE);
+
+	/*
+	 * Adjust core voltage according to voltage ID
+	 * This function changes I2C mux to channel 2.
+	 */
+	if (adjust_vdd(0))
+		printf("Warning: Adjusting core voltage failed.\n");
 
 	brd_mux_lane_to_slot();
 	select_i2c_ch_pca9547(I2C_MUX_CH_DEFAULT);
@@ -433,7 +450,7 @@ int misc_init_r(void)
 	return 0;
 }
 
-void ft_board_setup(void *blob, bd_t *bd)
+int ft_board_setup(void *blob, bd_t *bd)
 {
 	phys_addr_t base;
 	phys_size_t size;
@@ -456,4 +473,6 @@ void ft_board_setup(void *blob, bd_t *bd)
 	fdt_fixup_fman_ethernet(blob);
 	fdt_fixup_board_enet(blob);
 #endif
+
+	return 0;
 }

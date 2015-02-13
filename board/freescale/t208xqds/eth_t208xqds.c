@@ -23,6 +23,7 @@
 #include <phy.h>
 #include <asm/fsl_dtsec.h>
 #include <asm/fsl_serdes.h>
+#include <hwconfig.h>
 #include "../common/qixis.h"
 #include "../common/fman.h"
 #include "t208xqds_qixis.h"
@@ -45,6 +46,15 @@
 #define EMI1_SLOT7      7
 #define EMI2		8
 #endif
+
+#define PCCR1_SGMIIA_KX_MASK		0x00008000
+#define PCCR1_SGMIIB_KX_MASK		0x00004000
+#define PCCR1_SGMIIC_KX_MASK		0x00002000
+#define PCCR1_SGMIID_KX_MASK		0x00001000
+#define PCCR1_SGMIIE_KX_MASK		0x00000800
+#define PCCR1_SGMIIF_KX_MASK		0x00000400
+#define PCCR1_SGMIIG_KX_MASK		0x00000200
+#define PCCR1_SGMIIH_KX_MASK		0x00000100
 
 static int mdio_mux[NUM_FM_PORTS];
 
@@ -187,8 +197,18 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 {
 	int phy;
 	char alias[20];
+	char lane_mode[2][20] = {"1000BASE-KX", "10GBASE-KR"};
+	char buf[32] = "serdes-1,";
 	struct fixed_link f_link;
+	int media_type = 0;
+	int off;
+
 	ccsr_gur_t *gur = (void *)(CONFIG_SYS_MPC85xx_GUTS_ADDR);
+#ifdef CONFIG_T2080QDS
+	serdes_corenet_t *srds_regs =
+		(void *)CONFIG_SYS_FSL_CORENET_SERDES_ADDR;
+	u32 srds1_pccr1 = in_be32(&srds_regs->srdspccr1);
+#endif
 	u32 srds_s1 = in_be32(&gur->rcwsr[4]) &
 				FSL_CORENET2_RCWSR4_SRDS1_PRTCL;
 
@@ -199,9 +219,54 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 		switch (port) {
 #if defined(CONFIG_T2080QDS)
 		case FM1_DTSEC1:
+			if (hwconfig_sub("fsl_1gkx", "fm1_1g1")) {
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						   "phy_1gkx1");
+				fdt_status_okay_by_alias(fdt, "1gkx_pcs_mdio1");
+				sprintf(buf, "%s%s%s", buf, "lane-c,",
+						(char *)lane_mode[0]);
+				out_be32(&srds_regs->srdspccr1, srds1_pccr1 |
+					 PCCR1_SGMIIH_KX_MASK);
+				break;
+			}
 		case FM1_DTSEC2:
+			if (hwconfig_sub("fsl_1gkx", "fm1_1g2")) {
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						   "phy_1gkx2");
+				fdt_status_okay_by_alias(fdt, "1gkx_pcs_mdio2");
+				sprintf(buf, "%s%s%s", buf, "lane-d,",
+						(char *)lane_mode[0]);
+				out_be32(&srds_regs->srdspccr1, srds1_pccr1 |
+					 PCCR1_SGMIIG_KX_MASK);
+				break;
+			}
 		case FM1_DTSEC9:
+			if (hwconfig_sub("fsl_1gkx", "fm1_1g9")) {
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						   "phy_1gkx9");
+				fdt_status_okay_by_alias(fdt, "1gkx_pcs_mdio9");
+				sprintf(buf, "%s%s%s", buf, "lane-a,",
+						(char *)lane_mode[0]);
+				out_be32(&srds_regs->srdspccr1, srds1_pccr1 |
+					 PCCR1_SGMIIE_KX_MASK);
+				break;
+			}
 		case FM1_DTSEC10:
+			if (hwconfig_sub("fsl_1gkx", "fm1_1g10")) {
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						   "phy_1gkx10");
+				fdt_status_okay_by_alias(fdt,
+							 "1gkx_pcs_mdio10");
+				sprintf(buf, "%s%s%s", buf, "lane-b,",
+						(char *)lane_mode[0]);
+				out_be32(&srds_regs->srdspccr1, srds1_pccr1 |
+					 PCCR1_SGMIIF_KX_MASK);
+				break;
+			}
 			if (mdio_mux[port] == EMI1_SLOT2) {
 				sprintf(alias, "phy_sgmii_s2_%x", phy);
 				fdt_set_phy_handle(fdt, compat, addr, alias);
@@ -213,7 +278,29 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 			}
 			break;
 		case FM1_DTSEC5:
+			if (hwconfig_sub("fsl_1gkx", "fm1_1g5")) {
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						   "phy_1gkx5");
+				fdt_status_okay_by_alias(fdt, "1gkx_pcs_mdio5");
+				sprintf(buf, "%s%s%s", buf, "lane-g,",
+						(char *)lane_mode[0]);
+				out_be32(&srds_regs->srdspccr1, srds1_pccr1 |
+					 PCCR1_SGMIIC_KX_MASK);
+				break;
+			}
 		case FM1_DTSEC6:
+			if (hwconfig_sub("fsl_1gkx", "fm1_1g6")) {
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						   "phy_1gkx6");
+				fdt_status_okay_by_alias(fdt, "1gkx_pcs_mdio6");
+				sprintf(buf, "%s%s%s", buf, "lane-h,",
+						(char *)lane_mode[0]);
+				out_be32(&srds_regs->srdspccr1, srds1_pccr1 |
+					 PCCR1_SGMIID_KX_MASK);
+				break;
+			}
 			if (mdio_mux[port] == EMI1_SLOT1) {
 				sprintf(alias, "phy_sgmii_s1_%x", phy);
 				fdt_set_phy_handle(fdt, compat, addr, alias);
@@ -257,6 +344,12 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 		default:
 			break;
 		}
+		if (media_type) {
+			/* set property for 1000BASE-KX in dtb */
+			off = fdt_node_offset_by_compat_reg(fdt,
+					"fsl,fman-memac-mdio", addr + 0x1000);
+			fdt_setprop_string(fdt, off, "lane-instance", buf);
+		}
 
 	} else if (fm_info_get_enet_if(port) == PHY_INTERFACE_MODE_XGMII) {
 		switch (srds_s1) {
@@ -265,15 +358,77 @@ void board_ft_fman_fixup_port(void *fdt, char *compat, phys_addr_t addr,
 		case 0x6c:
 		case 0x6d:
 		case 0x71:
-			f_link.phy_id = port;
-			f_link.duplex = 1;
-			f_link.link_speed = 10000;
-			f_link.pause = 0;
-			f_link.asym_pause = 0;
-			/* no PHY for XFI */
-			fdt_delprop(fdt, offset, "phy-handle");
-			fdt_setprop(fdt, offset, "fixed-link", &f_link,
-				    sizeof(f_link));
+			/*
+			* if the 10G is XFI, check hwconfig to see what is the
+			* media type, there are two types, fiber or copper,
+			* fix the dtb accordingly.
+			*/
+			switch (port) {
+			case FM1_10GEC1:
+			if (hwconfig_sub("fsl_10gkr_copper", "fm1_10g1")) {
+				/* it's MAC9 */
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						"phy_xfi9");
+				fdt_status_okay_by_alias(fdt, "xfi_pcs_mdio9");
+				sprintf(buf, "%s%s%s", buf, "lane-a,",
+						(char *)lane_mode[1]);
+			}
+				break;
+			case FM1_10GEC2:
+			if (hwconfig_sub("fsl_10gkr_copper", "fm1_10g2")) {
+				/* it's MAC10 */
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						"phy_xfi10");
+				fdt_status_okay_by_alias(fdt, "xfi_pcs_mdio10");
+				sprintf(buf, "%s%s%s", buf, "lane-b,",
+						(char *)lane_mode[1]);
+			}
+				break;
+			case FM1_10GEC3:
+			if (hwconfig_sub("fsl_10gkr_copper", "fm1_10g3")) {
+				/* it's MAC1 */
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						"phy_xfi1");
+				fdt_status_okay_by_alias(fdt, "xfi_pcs_mdio1");
+				sprintf(buf, "%s%s%s", buf, "lane-c,",
+						(char *)lane_mode[1]);
+			}
+				break;
+			case FM1_10GEC4:
+			if (hwconfig_sub("fsl_10gkr_copper", "fm1_10g4")) {
+				/* it's MAC2 */
+				media_type = 1;
+				fdt_set_phy_handle(fdt, compat, addr,
+						"phy_xfi2");
+				fdt_status_okay_by_alias(fdt, "xfi_pcs_mdio2");
+				sprintf(buf, "%s%s%s", buf, "lane-d,",
+						(char *)lane_mode[1]);
+			}
+				break;
+			default:
+				return;
+			}
+
+			if (!media_type) {
+				/* fixed-link is used for XFI fiber cable */
+				f_link.phy_id = port;
+				f_link.duplex = 1;
+				f_link.link_speed = 10000;
+				f_link.pause = 0;
+				f_link.asym_pause = 0;
+				fdt_delprop(fdt, offset, "phy-handle");
+				fdt_setprop(fdt, offset, "fixed-link", &f_link,
+					sizeof(f_link));
+			} else {
+				/* set property for copper cable */
+				off = fdt_node_offset_by_compat_reg(fdt,
+					"fsl,fman-memac-mdio", addr + 0x1000);
+				fdt_setprop_string(fdt, off,
+					"lane-instance", buf);
+			}
 			break;
 		default:
 			break;
@@ -416,6 +571,7 @@ int board_eth_init(bd_t *bis)
 		fm_info_set_phy_address(FM1_DTSEC10, RGMII_PHY2_ADDR);
 
 	switch (srds_s1) {
+	case 0x1b:
 	case 0x1c:
 	case 0x95:
 	case 0xa2:
@@ -429,8 +585,11 @@ int board_eth_init(bd_t *bis)
 		fm_info_set_phy_address(FM1_DTSEC5, SGMII_CARD_PORT3_PHY_ADDR);
 		fm_info_set_phy_address(FM1_DTSEC6, SGMII_CARD_PORT4_PHY_ADDR);
 		break;
+	case 0x50:
 	case 0x51:
+	case 0x5e:
 	case 0x5f:
+	case 0x64:
 	case 0x65:
 		/* T2080QDS: XAUI/HiGig in Slot3;  T2081QDS: in Slot2 */
 		fm_info_set_phy_address(FM1_10GEC1, FM1_10GEC1_PHY_ADDR);
@@ -439,6 +598,7 @@ int board_eth_init(bd_t *bis)
 		fm_info_set_phy_address(FM1_DTSEC6, SGMII_CARD_PORT4_PHY_ADDR);
 		break;
 	case 0x66:
+	case 0x67:
 		/*
 		 * XFI does not need a PHY to work, but to avoid U-boot use
 		 * default PHY address which is zero to a MAC when it found
@@ -453,6 +613,7 @@ int board_eth_init(bd_t *bis)
 		fm_info_set_phy_address(FM1_10GEC3, 6);
 		fm_info_set_phy_address(FM1_10GEC4, 7);
 		break;
+	case 0x6a:
 	case 0x6b:
 		fm_info_set_phy_address(FM1_10GEC1, 4);
 		fm_info_set_phy_address(FM1_10GEC2, 5);
@@ -470,6 +631,7 @@ int board_eth_init(bd_t *bis)
 		fm_info_set_phy_address(FM1_DTSEC1, SGMII_CARD_PORT3_PHY_ADDR);
 		fm_info_set_phy_address(FM1_DTSEC2, SGMII_CARD_PORT4_PHY_ADDR);
 		break;
+	case 0x70:
 	case 0x71:
 		/* SGMII in Slot3 */
 		fm_info_set_phy_address(FM1_DTSEC1, SGMII_CARD_PORT3_PHY_ADDR);
@@ -625,6 +787,7 @@ int board_eth_init(bd_t *bis)
 			fm_info_set_mdio(i, mii_dev_for_muxval(mdio_mux[i]));
 
 			if ((srds_s1 == 0x66) || (srds_s1 == 0x6b) ||
+			    (srds_s1 == 0x6a) || (srds_s1 == 0x70) ||
 			    (srds_s1 == 0x6c) || (srds_s1 == 0x6d) ||
 			    (srds_s1 == 0x71)) {
 				/* As XFI is in cage intead of a slot, so

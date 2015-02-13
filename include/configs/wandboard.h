@@ -26,6 +26,8 @@
 #define CONFIG_INITRD_TAG
 #define CONFIG_REVISION_TAG
 
+#define CONFIG_SYS_GENERIC_BOARD
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(10 * SZ_1M)
 
@@ -56,6 +58,12 @@
 #define CONFIG_LOADADDR			0x12000000
 #define CONFIG_SYS_TEXT_BASE		0x17800000
 
+/* I2C Configs */
+#define CONFIG_CMD_I2C
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_MXC
+#define CONFIG_SYS_I2C_SPEED		100000
+
 /* MMC Configuration */
 #define CONFIG_FSL_ESDHC
 #define CONFIG_FSL_USDHC
@@ -69,6 +77,15 @@
 #define CONFIG_CMD_EXT2
 #define CONFIG_CMD_FAT
 #define CONFIG_DOS_PARTITION
+
+/* USB Configs */
+#define CONFIG_CMD_USB
+#define CONFIG_USB_EHCI
+#define CONFIG_USB_EHCI_MX6
+#define CONFIG_USB_STORAGE
+#define CONFIG_USB_MAX_CONTROLLER_COUNT	2
+#define CONFIG_MXC_USB_PORTSC		(PORT_PTS_UTMI | PORT_PTS_PTW)
+#define CONFIG_MXC_USB_FLAGS		0
 
 /* Ethernet Configuration */
 #define CONFIG_CMD_PING
@@ -98,7 +115,14 @@
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
 #define CONFIG_IPUV3_CLK 260000000
+#define CONFIG_CMD_HDMIDETECT
 #define CONFIG_IMX_HDMI
+#define CONFIG_IMX_VIDEO_SKIP
+
+#define CONFIG_CMD_FUSE
+#ifdef CONFIG_CMD_FUSE
+#define CONFIG_MXC_OCOTP
+#endif
 
 #if defined(CONFIG_MX6DL) || defined(CONFIG_MX6S)
 #define CONFIG_DEFAULT_FDT_FILE		"imx6dl-wandboard.dtb"
@@ -135,7 +159,33 @@
 			"fi; "	\
 		"fi\0" \
 	"mmcargs=setenv bootargs console=${console},${baudrate} " \
-		"root=${mmcroot}\0" \
+		"root=${mmcroot}; run videoargs\0" \
+	"videoargs=" \
+		"setenv nextcon 0; " \
+		"if hdmidet; then " \
+			"setenv bootargs ${bootargs} " \
+				"video=mxcfb${nextcon}:dev=hdmi,1280x720M@60," \
+					"if=RGB24; " \
+			"setenv fbmen fbmem=28M; " \
+			"setexpr nextcon ${nextcon} + 1; " \
+		"else " \
+			"echo - no HDMI monitor;" \
+		"fi; " \
+		"i2c dev 1; " \
+		"if i2c probe 0x10; then " \
+			"setenv bootargs ${bootargs} " \
+				"video=mxcfb${nextcon}:dev=lcd,800x480@60," \
+					"if=RGB666; " \
+			"if test 0 -eq ${nextcon}; then " \
+				"setenv fbmem fbmem=10M; " \
+			"else " \
+				"setenv fbmem ${fbmem},10M; " \
+			"fi; " \
+			"setexpr nextcon ${nextcon} + 1; " \
+		"else " \
+			"echo '- no FWBADAPT-7WVGA-LCD-F07A-0102 display';" \
+		"fi; " \
+		"setenv bootargs ${bootargs} ${fbmem}\0" \
 	"loadbootscript=" \
 		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \

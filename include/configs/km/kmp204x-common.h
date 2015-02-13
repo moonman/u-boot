@@ -11,7 +11,7 @@
 #define CONFIG_PHYS_64BIT
 #define CONFIG_PPC_P2041
 
-#define CONFIG_SYS_TEXT_BASE	0xfff80000
+#define CONFIG_SYS_TEXT_BASE	0xfff40000
 
 #define CONFIG_KM_DEF_NETDEV	"netdev=eth0\0"
 
@@ -20,6 +20,9 @@
 #define CONFIG_KM_UBI_PART_BOOT_OPTS		",2048"
 
 #define CONFIG_NAND_ECC_BCH
+
+#define CONFIG_SYS_GENERIC_BOARD
+#define CONFIG_DISPLAY_BOARDINFO
 
 /* common KM defines */
 #include "keymile-common.h"
@@ -85,11 +88,7 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_ADDR_MAP
 #define CONFIG_SYS_NUM_ADDR_MAP		64	/* number of TLB1 entries */
 
-#define CONFIG_POST CONFIG_SYS_POST_MEMORY	/* test POST memory test */
-#define CONFIG_SYS_MEMTEST_START	0x00100000	/* memtest works on */
-#define CONFIG_SYS_MEMTEST_END		0x00800000
-#define CONFIG_SYS_ALT_MEMTEST
-#define CONFIG_PANIC_HANG	/* do not reset board on panic */
+#define CONFIG_POST CONFIG_SYS_POST_MEM_REGIONS	/* POST memory regions test */
 
 /*
  *  Config the L3 Cache as L3 SRAM
@@ -143,10 +142,12 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_KM_PNVRAM	0x80000
 /* physical RAM MTD size [hex] */
 #define CONFIG_KM_PHRAM		0x100000
-/* resereved pram area at the end of memroy [hex] */
-#define CONFIG_KM_RESERVED_PRAM	0x0
-/* enable protected RAM */
-#define CONFIG_PRAM		0
+/* reserved pram area at the end of memory [hex]
+ * u-boot reserves some memory for the MP boot page */
+#define CONFIG_KM_RESERVED_PRAM	0x1000
+/* set the default PRAM value to at least PNVRAM + PHRAM when pram env variable
+ * is not valid yet, which is the case for when u-boot copies itself to RAM */
+#define CONFIG_PRAM		((CONFIG_KM_PNVRAM + CONFIG_KM_PHRAM)>>10)
 
 #define CONFIG_KM_CRAMFS_ADDR	0x2000000
 #define CONFIG_KM_KERNEL_ADDR	0x1000000	/* max kernel size 15.5Mbytes */
@@ -237,7 +238,7 @@ unsigned long get_board_sys_clk(unsigned long dummy);
 #define CONFIG_SYS_INIT_SP_OFFSET	CONFIG_SYS_GBL_DATA_OFFSET
 
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
-#define CONFIG_SYS_MONITOR_LEN		(512 * 1024)
+#define CONFIG_SYS_MONITOR_LEN		(768 * 1024)
 #define CONFIG_SYS_MALLOC_LEN		(1024 * 1024)
 
 /* Serial Port - controlled on board with jumper J8
@@ -338,10 +339,26 @@ int get_scl(void);
 #define CONFIG_SYS_BMAN_MEM_BASE	0xf4000000
 #define CONFIG_SYS_BMAN_MEM_PHYS	0xff4000000ull
 #define CONFIG_SYS_BMAN_MEM_SIZE	0x00200000
+#define CONFIG_SYS_BMAN_SP_CENA_SIZE    0x4000
+#define CONFIG_SYS_BMAN_SP_CINH_SIZE    0x1000
+#define CONFIG_SYS_BMAN_CENA_BASE       CONFIG_SYS_BMAN_MEM_BASE
+#define CONFIG_SYS_BMAN_CENA_SIZE       (CONFIG_SYS_BMAN_MEM_SIZE >> 1)
+#define CONFIG_SYS_BMAN_CINH_BASE       (CONFIG_SYS_BMAN_MEM_BASE + \
+					CONFIG_SYS_BMAN_CENA_SIZE)
+#define CONFIG_SYS_BMAN_CINH_SIZE       (CONFIG_SYS_BMAN_MEM_SIZE >> 1)
+#define CONFIG_SYS_BMAN_SWP_ISDR_REG	0xE08
 #define CONFIG_SYS_QMAN_NUM_PORTALS	10
 #define CONFIG_SYS_QMAN_MEM_BASE	0xf4200000
 #define CONFIG_SYS_QMAN_MEM_PHYS	0xff4200000ull
 #define CONFIG_SYS_QMAN_MEM_SIZE	0x00200000
+#define CONFIG_SYS_QMAN_SP_CENA_SIZE    0x4000
+#define CONFIG_SYS_QMAN_SP_CINH_SIZE    0x1000
+#define CONFIG_SYS_QMAN_CENA_BASE       CONFIG_SYS_QMAN_MEM_BASE
+#define CONFIG_SYS_QMAN_CENA_SIZE       (CONFIG_SYS_QMAN_MEM_SIZE >> 1)
+#define CONFIG_SYS_QMAN_CINH_BASE       (CONFIG_SYS_QMAN_MEM_BASE + \
+					CONFIG_SYS_QMAN_CENA_SIZE)
+#define CONFIG_SYS_QMAN_CINH_SIZE       (CONFIG_SYS_QMAN_MEM_SIZE >> 1)
+#define CONFIG_SYS_QMAN_SWP_ISDR_REG	0xE08
 
 #define CONFIG_SYS_DPAA_FMAN
 #define CONFIG_SYS_DPAA_PME
@@ -350,7 +367,7 @@ int get_scl(void);
  * ucode is stored after env, so we got 0x120000.
  */
 #define CONFIG_SYS_QE_FW_IN_SPIFLASH
-#define CONFIG_SYS_QE_FMAN_FW_ADDR	0x120000
+#define CONFIG_SYS_FMAN_FW_ADDR	0x120000
 #define CONFIG_SYS_QE_FMAN_FW_LENGTH	0x10000
 #define CONFIG_SYS_FDT_PAD		(0x3000 + CONFIG_SYS_QE_FMAN_FW_LENGTH)
 
@@ -379,10 +396,19 @@ int get_scl(void);
 #define CONFIG_SYS_LOADS_BAUD_CHANGE	/* allow baudrate change */
 
 /*
+ * Hardware Watchdog
+ */
+#define CONFIG_WATCHDOG			/* enable CPU watchdog */
+#define CONFIG_WATCHDOG_PRESC 34	/* wdog prescaler 2^(64-34) (~10min) */
+#define CONFIG_WATCHDOG_RC WRC_CHIP	/* reset chip on watchdog event */
+
+
+/*
  * additionnal command line configuration.
  */
 #define CONFIG_CMD_PCI
 #define CONFIG_CMD_NET
+#define CONFIG_CMD_ERRATA
 
 /* we don't need flash support */
 #define CONFIG_SYS_NO_FLASH

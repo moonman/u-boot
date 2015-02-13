@@ -34,6 +34,7 @@
 #include <onenand_uboot.h>
 #include <mmc.h>
 #include <scsi.h>
+#include <status_led.h>
 #include <libfdt.h>
 #include <fdtdec.h>
 #include <post.h>
@@ -63,25 +64,15 @@ extern void dataflash_print_info(void);
  ************************************************************************
  * May be supplied by boards if desired
  */
-inline void __coloured_LED_init(void) {}
-void coloured_LED_init(void)
-	__attribute__((weak, alias("__coloured_LED_init")));
-inline void __red_led_on(void) {}
-void red_led_on(void) __attribute__((weak, alias("__red_led_on")));
-inline void __red_led_off(void) {}
-void red_led_off(void) __attribute__((weak, alias("__red_led_off")));
-inline void __green_led_on(void) {}
-void green_led_on(void) __attribute__((weak, alias("__green_led_on")));
-inline void __green_led_off(void) {}
-void green_led_off(void) __attribute__((weak, alias("__green_led_off")));
-inline void __yellow_led_on(void) {}
-void yellow_led_on(void) __attribute__((weak, alias("__yellow_led_on")));
-inline void __yellow_led_off(void) {}
-void yellow_led_off(void) __attribute__((weak, alias("__yellow_led_off")));
-inline void __blue_led_on(void) {}
-void blue_led_on(void) __attribute__((weak, alias("__blue_led_on")));
-inline void __blue_led_off(void) {}
-void blue_led_off(void) __attribute__((weak, alias("__blue_led_off")));
+__weak void coloured_LED_init(void) {}
+__weak void red_led_on(void) {}
+__weak void red_led_off(void) {}
+__weak void green_led_on(void) {}
+__weak void green_led_off(void) {}
+__weak void yellow_led_on(void) {}
+__weak void yellow_led_off(void) {}
+__weak void blue_led_on(void) {}
+__weak void blue_led_off(void) {}
 
 /*
  ************************************************************************
@@ -198,27 +189,21 @@ static int arm_pci_init(void)
  */
 typedef int (init_fnc_t) (void);
 
-void __dram_init_banksize(void)
+__weak void dram_init_banksize(void)
 {
 	gd->bd->bi_dram[0].start = CONFIG_SYS_SDRAM_BASE;
 	gd->bd->bi_dram[0].size =  gd->ram_size;
 }
-void dram_init_banksize(void)
-	__attribute__((weak, alias("__dram_init_banksize")));
 
-int __arch_cpu_init(void)
+__weak int arch_cpu_init(void)
 {
 	return 0;
 }
-int arch_cpu_init(void)
-	__attribute__((weak, alias("__arch_cpu_init")));
 
-int __power_init_board(void)
+__weak int power_init_board(void)
 {
 	return 0;
 }
-int power_init_board(void)
-	__attribute__((weak, alias("__power_init_board")));
 
 	/* Record the board_init_f() bootstage (after arch_cpu_init()) */
 static int mark_bootstage(void)
@@ -277,7 +262,7 @@ void board_init_f(ulong bootflag)
 	gd->mon_len = (ulong)&__bss_end - (ulong)_start;
 #ifdef CONFIG_OF_EMBED
 	/* Get a pointer to the FDT */
-	gd->fdt_blob = __dtb_db_begin;
+	gd->fdt_blob = __dtb_dt_begin;
 #elif defined CONFIG_OF_SEPARATE
 	/* FDT is at end of image */
 	gd->fdt_blob = &_end;
@@ -445,7 +430,6 @@ void board_init_f(ulong bootflag)
 	post_run(NULL, POST_ROM | post_bootmode_get(0));
 #endif
 
-	gd->bd->bi_baudrate = gd->baudrate;
 	/* Ram ist board specific, so move it to board code ... */
 	dram_init_banksize();
 	display_dram_config();	/* and display it */

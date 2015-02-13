@@ -19,12 +19,23 @@
 #define CONFIG_SYS_TIMERBASE		0x48040000	/* Use Timer2 */
 #define CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC
 
+#ifndef CONFIG_SPL_BUILD
+# define CONFIG_DM
+# define CONFIG_CMD_DM
+# define CONFIG_DM_GPIO
+# define CONFIG_DM_SERIAL
+# define CONFIG_OMAP_SERIAL
+# define CONFIG_SYS_MALLOC_F_LEN	(1 << 10)
+#endif
+
 #include <asm/arch/omap.h>
 
 /* NS16550 Configuration */
 #define CONFIG_SYS_NS16550
+#ifdef CONFIG_SPL_BUILD
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	(-4)
+#endif
 #define CONFIG_SYS_NS16550_CLK		48000000
 
 /* Network defines. */
@@ -61,6 +72,8 @@
  */
 #define CONFIG_SPL_TEXT_BASE		0x402F0400
 #define CONFIG_SPL_MAX_SIZE		(0x4030B800 - CONFIG_SPL_TEXT_BASE)
+#define CONFIG_SYS_SPL_ARGS_ADDR	(CONFIG_SYS_SDRAM_BASE + \
+					 (128 << 20))
 
 /* Enable the watchdog inside of SPL */
 #define CONFIG_SPL_WATCHDOG_SUPPORT
@@ -71,6 +84,15 @@
  */
 #if !defined(CONFIG_SPL_BUILD) && !defined(CONFIG_NOR_BOOT)
 #define CONFIG_SKIP_LOWLEVEL_INIT
+#endif
+
+/*
+ * When building U-Boot such that there is no previous loader
+ * we need to call board_early_init_f.  This is taken care of in
+ * s_init when we have SPL used.
+ */
+#if !defined(CONFIG_SKIP_LOWLEVEL_INIT) && !defined(CONFIG_SPL)
+#define CONFIG_BOARD_EARLY_INIT_F
 #endif
 
 #ifdef CONFIG_NAND

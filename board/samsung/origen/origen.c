@@ -6,8 +6,8 @@
 
 #include <common.h>
 #include <asm/io.h>
+#include <asm/gpio.h>
 #include <asm/arch/cpu.h>
-#include <asm/arch/gpio.h>
 #include <asm/arch/mmc.h>
 #include <asm/arch/periph.h>
 #include <asm/arch/pinmux.h>
@@ -29,13 +29,6 @@ int board_usb_init(int index, enum usb_init_type init)
 {
 	return 0;
 }
-
-#ifdef CONFIG_USB_CABLE_CHECK
-int usb_cable_connected(void)
-{
-	return 0;
-}
-#endif
 
 #ifdef CONFIG_BOARD_EARLY_INIT_F
 int exynos_early_init_f(void)

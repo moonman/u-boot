@@ -5,7 +5,8 @@
 # SPDX-License-Identifier:	GPL-2.0+
 #
 
-obj-y	+= board.o
+obj-y	+= io.o
+
 obj-$(CONFIG_CMD_BOOTM) += bootm.o
 
 lib-$(CONFIG_USE_PRIVATE_LIBGCC) += ashldi3.o ashrdi3.o lshrdi3.o

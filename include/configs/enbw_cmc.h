@@ -25,7 +25,6 @@
 /*
  * SoC Configuration
  */
-#define CONFIG_ARM926EJS		/* arm926ejs CPU core */
 #define CONFIG_SOC_DA8XX		/* TI DA8xx SoC */
 #define CONFIG_SOC_DA850		/* TI DA850 SoC */
 #define CONFIG_SYS_EXCEPTION_VECTORS_HIGH
@@ -73,10 +72,10 @@
 /*
  * I2C Configuration
  */
-#define CONFIG_HARD_I2C
-#define CONFIG_DRIVER_DAVINCI_I2C
-#define CONFIG_SYS_I2C_SPEED		80000
-#define CONFIG_SYS_I2C_SLAVE		10 /* Bogus, master-only in U-Boot */
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_DAVINCI
+#define CONFIG_SYS_DAVINCI_I2C_SPEED		80000
+#define CONFIG_SYS_DAVINCI_I2C_SLAVE   10 /* Bogus, master-only in U-Boot */
 #define CONFIG_SYS_I2C_EXPANDER_ADDR   0x20
 #define CONFIG_CMD_I2C
 

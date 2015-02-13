@@ -28,7 +28,6 @@
  * SoC Configuration
  */
 #define CONFIG_MACH_DAVINCI_DA850_EVM
-#define CONFIG_ARM926EJS		/* arm926ejs CPU core */
 #define CONFIG_SOC_DA8XX		/* TI DA8xx SoC */
 #define CONFIG_SOC_DA850		/* TI DA850 SoC */
 #define CONFIG_SYS_CLK_FREQ		clk_get(DAVINCI_ARM_CLKID)
@@ -78,9 +77,10 @@
 /*
  * I2C Configuration
  */
-#define CONFIG_HARD_I2C
-#define CONFIG_DRIVER_DAVINCI_I2C
-#define CONFIG_SYS_I2C_SPEED		100000
+#define CONFIG_SYS_I2C
+#define CONFIG_SYS_I2C_DAVINCI
+#define CONFIG_SYS_DAVINCI_I2C_SPEED		100000
+#define CONFIG_SYS_DAVINCI_I2C_SLAVE   10 /* Bogus, master-only in U-Boot */
 
 /*
  * Network & Ethernet Configuration

@@ -17,13 +17,15 @@
  * SPDX-License-Identifier:	GPL-2.0+
  */
 #include <common.h>
+#include <dm.h>
+#include <mmc.h>
 #include <spl.h>
 #include <asm/io.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/arch/mem.h>
 #include <asm/cache.h>
 #include <asm/armv7.h>
-#include <asm/arch/gpio.h>
+#include <asm/gpio.h>
 #include <asm/omap_common.h>
 #include <asm/arch/mmc_host_def.h>
 #include <i2c.h>
@@ -38,6 +40,27 @@ static void omap3_setup_aux_cr(void);
 static void omap3_invalidate_l2_cache_secure(void);
 #endif
 
+#ifdef CONFIG_DM_GPIO
+static const struct omap_gpio_platdata omap34xx_gpio[] = {
+	{ 0, OMAP34XX_GPIO1_BASE, METHOD_GPIO_24XX },
+	{ 1, OMAP34XX_GPIO2_BASE, METHOD_GPIO_24XX },
+	{ 2, OMAP34XX_GPIO3_BASE, METHOD_GPIO_24XX },
+	{ 3, OMAP34XX_GPIO4_BASE, METHOD_GPIO_24XX },
+	{ 4, OMAP34XX_GPIO5_BASE, METHOD_GPIO_24XX },
+	{ 5, OMAP34XX_GPIO6_BASE, METHOD_GPIO_24XX },
+};
+
+U_BOOT_DEVICES(am33xx_gpios) = {
+	{ "gpio_omap", &omap34xx_gpio[0] },
+	{ "gpio_omap", &omap34xx_gpio[1] },
+	{ "gpio_omap", &omap34xx_gpio[2] },
+	{ "gpio_omap", &omap34xx_gpio[3] },
+	{ "gpio_omap", &omap34xx_gpio[4] },
+	{ "gpio_omap", &omap34xx_gpio[5] },
+};
+
+#else
+
 static const struct gpio_bank gpio_bank_34xx[6] = {
 	{ (void *)OMAP34XX_GPIO1_BASE, METHOD_GPIO_24XX },
 	{ (void *)OMAP34XX_GPIO2_BASE, METHOD_GPIO_24XX },
@@ -48,6 +71,8 @@ static const struct gpio_bank gpio_bank_34xx[6] = {
 };
 
 const struct gpio_bank *const omap_gpio_bank = gpio_bank_34xx;
+
+#endif
 
 #ifdef CONFIG_SPL_BUILD
 /*
@@ -65,7 +90,7 @@ u32 spl_boot_mode(void)
 	case BOOT_DEVICE_MMC2:
 		return MMCSD_MODE_RAW;
 	case BOOT_DEVICE_MMC1:
-		return MMCSD_MODE_FAT;
+		return MMCSD_MODE_FS;
 		break;
 	default:
 		puts("spl: ERROR:  unknown device - can't select boot mode\n");
@@ -147,7 +172,7 @@ void secure_unlock_mem(void)
  *		configure secure registers and exit secure world
  *              general use.
  *****************************************************************************/
-void secureworld_exit()
+void secureworld_exit(void)
 {
 	unsigned long i;
 
@@ -178,7 +203,7 @@ void secureworld_exit()
  * Description: If chip is GP/EMU(special) type, unlock the SRAM for
  *              general use.
  *****************************************************************************/
-void try_unlock_memory()
+void try_unlock_memory(void)
 {
 	int mode;
 	int in_sdram = is_running_in_sdram();
@@ -266,7 +291,7 @@ int __weak misc_init_r(void)
  * Routine: wait_for_command_complete
  * Description: Wait for posting to finish on watchdog
  *****************************************************************************/
-void wait_for_command_complete(struct watchdog *wd_base)
+static void wait_for_command_complete(struct watchdog *wd_base)
 {
 	int pending = 1;
 	do {
@@ -290,8 +315,8 @@ void watchdog_init(void)
 	 * should not be running and does not generate a PRCM reset.
 	 */
 
-	sr32(&prcm_base->fclken_wkup, 5, 1, 1);
-	sr32(&prcm_base->iclken_wkup, 5, 1, 1);
+	setbits_le32(&prcm_base->fclken_wkup, 0x20);
+	setbits_le32(&prcm_base->iclken_wkup, 0x20);
 	wait_on_value(ST_WDT2, 0x20, &prcm_base->idlest_wkup, 5);
 
 	writel(WD_UNLOCK1, &wd2_base->wspr);
@@ -478,11 +503,3 @@ void omap3_outer_cache_disable(void)
 	omap3_update_aux_cr(0, 0x2);
 }
 #endif /* !CONFIG_SYS_L2CACHE_OFF */
-
-#ifndef CONFIG_SYS_DCACHE_OFF
-void enable_caches(void)
-{
-	/* Enable D-cache. I-cache is already enabled in start.S */
-	dcache_enable();
-}
-#endif /* !CONFIG_SYS_DCACHE_OFF */

@@ -18,6 +18,7 @@
 #include <phy.h>
 #include <errno.h>
 #include <linux/err.h>
+#include <linux/compiler.h>
 
 /* Generic PHY support and helper functions */
 
@@ -447,14 +448,14 @@ int phy_init(void)
 #ifdef CONFIG_PHY_BROADCOM
 	phy_broadcom_init();
 #endif
+#ifdef CONFIG_PHY_CORTINA
+	phy_cortina_init();
+#endif
 #ifdef CONFIG_PHY_DAVICOM
 	phy_davicom_init();
 #endif
 #ifdef CONFIG_PHY_ET1011C
 	phy_et1011c_init();
-#endif
-#ifdef CONFIG_PHY_ICPLUS
-	phy_icplus_init();
 #endif
 #ifdef CONFIG_PHY_LXT
 	phy_lxt_init();
@@ -608,10 +609,8 @@ static struct phy_device *create_phy_by_mask(struct mii_dev *bus,
 	while (phy_mask) {
 		int addr = ffs(phy_mask) - 1;
 		int r = get_phy_id(bus, addr, devad, &phy_id);
-		if (r < 0)
-			return ERR_PTR(r);
 		/* If the PHY ID is mostly f's, we didn't find anything */
-		if ((phy_id & 0x1fffffff) != 0x1fffffff)
+		if (r == 0 && (phy_id & 0x1fffffff) != 0x1fffffff)
 			return phy_device_create(bus, addr, phy_id, interface);
 		phy_mask &= ~(1 << addr);
 	}
@@ -652,7 +651,7 @@ static struct phy_device *get_phy_device_by_mask(struct mii_dev *bus,
 		if (phydev)
 			return phydev;
 	}
-	printf("Phy not found\n");
+	printf("Phy %d not found\n", ffs(phy_mask) - 1);
 	return phy_device_create(bus, ffs(phy_mask) - 1, 0xffffffff, interface);
 }
 
@@ -789,15 +788,12 @@ int phy_startup(struct phy_device *phydev)
 	return 0;
 }
 
-static int __board_phy_config(struct phy_device *phydev)
+__weak int board_phy_config(struct phy_device *phydev)
 {
 	if (phydev->drv->config)
 		return phydev->drv->config(phydev);
 	return 0;
 }
-
-int board_phy_config(struct phy_device *phydev)
-	__attribute__((weak, alias("__board_phy_config")));
 
 int phy_config(struct phy_device *phydev)
 {

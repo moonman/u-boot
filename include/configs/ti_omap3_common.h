@@ -14,10 +14,18 @@
 #ifndef __CONFIG_TI_OMAP3_COMMON_H__
 #define __CONFIG_TI_OMAP3_COMMON_H__
 
-#define CONFIG_OMAP34XX
 
 #include <asm/arch/cpu.h>
 #include <asm/arch/omap3.h>
+
+#ifndef CONFIG_SPL_BUILD
+# define CONFIG_DM
+# define CONFIG_CMD_DM
+# define CONFIG_DM_GPIO
+# define CONFIG_DM_SERIAL
+# define CONFIG_OMAP_SERIAL
+# define CONFIG_SYS_MALLOC_F_LEN	(1 << 10)
+#endif
 
 /* The chip has SDRC controller */
 #define CONFIG_SDRC
@@ -29,16 +37,20 @@
 /* NS16550 Configuration */
 #define V_NS16550_CLK			48000000	/* 48MHz (APLL96/2) */
 #define CONFIG_SYS_NS16550
-#define CONFIG_SYS_NS16550_SERIAL
-#define CONFIG_SYS_NS16550_REG_SIZE	(-4)
-#define CONFIG_SYS_NS16550_CLK		V_NS16550_CLK
+#ifdef CONFIG_SPL_BUILD
+# define CONFIG_SYS_NS16550_SERIAL
+# define CONFIG_SYS_NS16550_REG_SIZE	(-4)
+# define CONFIG_SYS_NS16550_CLK		V_NS16550_CLK
+#endif
 #define CONFIG_SYS_BAUDRATE_TABLE	{4800, 9600, 19200, 38400, 57600, \
 					115200}
 
 /* Select serial console configuration */
 #define CONFIG_CONS_INDEX		3
+#ifdef CONFIG_SPL_BUILD
 #define CONFIG_SYS_NS16550_COM3		OMAP34XX_UART3
 #define CONFIG_SERIAL3			3
+#endif
 
 /* Physical Memory Map */
 #define PHYS_SDRAM_1		OMAP34XX_SDRC_CS0
@@ -61,10 +73,14 @@
 #define CONFIG_SPL_MAX_SIZE		(54 * 1024)
 #define CONFIG_SPL_LDSCRIPT		"$(CPUDIR)/omap-common/u-boot-spl.lds"
 #define CONFIG_SPL_POWER_SUPPORT
+#define CONFIG_SYS_SPL_ARGS_ADDR	(CONFIG_SYS_SDRAM_BASE + \
+					 (64 << 20))
+
 
 #ifdef CONFIG_NAND
 #define CONFIG_SPL_NAND_SUPPORT
 #define CONFIG_SPL_NAND_SIMPLE
+#define CONFIG_SYS_NAND_BASE		0x30000000
 #endif
 
 /* Now bring in the rest of the common code. */

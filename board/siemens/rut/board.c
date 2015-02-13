@@ -400,7 +400,7 @@ static int conf_disp_pll(int m, int n)
 #if defined(DISPL_PLL_SPREAD_SPECTRUM)
 	writel(0x64, &cmwkup->resv6[3]); /* 0x50 */
 	writel(0x800, &cmwkup->resv6[2]); /* 0x4c */
-	writel(readl(&cmwkup->clkmoddplldisp) | (1 << 12),
+	writel(readl(&cmwkup->clkmoddplldisp) | CM_CLKMODE_DPLL_SSC_EN_MASK,
 	       &cmwkup->clkmoddplldisp); /* 0x98 */
 #endif
 	return 0;
@@ -467,4 +467,27 @@ static int board_video_init(void)
 	return 0;
 }
 #endif /* ifdef CONFIG_VIDEO */
+
+#ifdef CONFIG_BOARD_LATE_INIT
+int board_late_init(void)
+{
+	int ret;
+	char tmp[2 * MAX_STRING_LENGTH + 2];
+
+	omap_nand_switch_ecc(1, 8);
+
+	if (factory_dat.asn[0] != 0)
+		sprintf(tmp, "%s_%s", factory_dat.asn,
+			factory_dat.comp_version);
+	else
+		sprintf(tmp, "QMX7.E38_4.0");
+
+	ret = setenv("boardid", tmp);
+	if (ret)
+		printf("error setting board id\n");
+
+	return 0;
+}
+#endif
+
 #include "../common/board.c"

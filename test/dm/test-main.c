@@ -7,6 +7,7 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
+#include <malloc.h>
 #include <dm/test.h>
 #include <dm/root.h>
 #include <dm/uclass-internal.h>
@@ -32,7 +33,7 @@ static int dm_test_init(struct dm_test_state *dms)
 /* Ensure all the test devices are probed */
 static int do_autoprobe(struct dm_test_state *dms)
 {
-	struct device *dev;
+	struct udevice *dev;
 	int ret;
 
 	/* Scanning the uclass is enough to probe all the devices */
@@ -88,12 +89,13 @@ int dm_test_main(void)
 		printf("Test: %s\n", test->name);
 		ut_assertok(dm_test_init(dms));
 
+		dms->start = mallinfo();
 		if (test->flags & DM_TESTF_SCAN_PDATA)
-			ut_assertok(dm_scan_platdata());
+			ut_assertok(dm_scan_platdata(false));
 		if (test->flags & DM_TESTF_PROBE_TEST)
 			ut_assertok(do_autoprobe(dms));
 		if (test->flags & DM_TESTF_SCAN_FDT)
-			ut_assertok(dm_scan_fdt(gd->fdt_blob));
+			ut_assertok(dm_scan_fdt(gd->fdt_blob, false));
 
 		if (test->func(dms))
 			break;

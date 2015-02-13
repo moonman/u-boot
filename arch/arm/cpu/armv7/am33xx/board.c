@@ -9,7 +9,9 @@
  */
 
 #include <common.h>
+#include <dm.h>
 #include <errno.h>
+#include <ns16550.h>
 #include <spl.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/hardware.h>
@@ -36,6 +38,63 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifdef CONFIG_DM_GPIO
+static const struct omap_gpio_platdata am33xx_gpio[] = {
+	{ 0, AM33XX_GPIO0_BASE, METHOD_GPIO_24XX },
+	{ 1, AM33XX_GPIO1_BASE, METHOD_GPIO_24XX },
+	{ 2, AM33XX_GPIO2_BASE, METHOD_GPIO_24XX },
+	{ 3, AM33XX_GPIO3_BASE, METHOD_GPIO_24XX },
+#ifdef CONFIG_AM43XX
+	{ 4, AM33XX_GPIO4_BASE, METHOD_GPIO_24XX },
+	{ 5, AM33XX_GPIO5_BASE, METHOD_GPIO_24XX },
+#endif
+};
+
+U_BOOT_DEVICES(am33xx_gpios) = {
+	{ "gpio_omap", &am33xx_gpio[0] },
+	{ "gpio_omap", &am33xx_gpio[1] },
+	{ "gpio_omap", &am33xx_gpio[2] },
+	{ "gpio_omap", &am33xx_gpio[3] },
+#ifdef CONFIG_AM43XX
+	{ "gpio_omap", &am33xx_gpio[4] },
+	{ "gpio_omap", &am33xx_gpio[5] },
+#endif
+};
+
+# ifndef CONFIG_OF_CONTROL
+/*
+ * TODO(sjg@chromium.org): When we can move SPL serial to DM, we can remove
+ * the CONFIGs. At the same time, we should move this to the board files.
+ */
+static const struct ns16550_platdata am33xx_serial[] = {
+	{ CONFIG_SYS_NS16550_COM1, 2, CONFIG_SYS_NS16550_CLK },
+#  ifdef CONFIG_SYS_NS16550_COM2
+	{ CONFIG_SYS_NS16550_COM2, 2, CONFIG_SYS_NS16550_CLK },
+#   ifdef CONFIG_SYS_NS16550_COM3
+	{ CONFIG_SYS_NS16550_COM3, 2, CONFIG_SYS_NS16550_CLK },
+	{ CONFIG_SYS_NS16550_COM4, 2, CONFIG_SYS_NS16550_CLK },
+	{ CONFIG_SYS_NS16550_COM5, 2, CONFIG_SYS_NS16550_CLK },
+	{ CONFIG_SYS_NS16550_COM6, 2, CONFIG_SYS_NS16550_CLK },
+#   endif
+#  endif
+};
+
+U_BOOT_DEVICES(am33xx_uarts) = {
+	{ "serial_omap", &am33xx_serial[0] },
+#  ifdef CONFIG_SYS_NS16550_COM2
+	{ "serial_omap", &am33xx_serial[1] },
+#   ifdef CONFIG_SYS_NS16550_COM3
+	{ "serial_omap", &am33xx_serial[2] },
+	{ "serial_omap", &am33xx_serial[3] },
+	{ "serial_omap", &am33xx_serial[4] },
+	{ "serial_omap", &am33xx_serial[5] },
+#   endif
+#  endif
+};
+# endif
+
+#else
+
 static const struct gpio_bank gpio_bank_am33xx[] = {
 	{ (void *)AM33XX_GPIO0_BASE, METHOD_GPIO_24XX },
 	{ (void *)AM33XX_GPIO1_BASE, METHOD_GPIO_24XX },
@@ -48,6 +107,8 @@ static const struct gpio_bank gpio_bank_am33xx[] = {
 };
 
 const struct gpio_bank *const omap_gpio_bank = gpio_bank_am33xx;
+
+#endif
 
 #if defined(CONFIG_OMAP_HSMMC) && !defined(CONFIG_SPL_BUILD)
 int cpu_mmc_init(bd_t *bis)
@@ -142,7 +203,20 @@ int arch_misc_init(void)
 	return 0;
 }
 
-#if defined(CONFIG_SPL_BUILD) || defined(CONFIG_NOR_BOOT)
+#ifndef CONFIG_SKIP_LOWLEVEL_INIT
+/*
+ * In the case of non-SPL based booting we'll want to call these
+ * functions a tiny bit later as it will require gd to be set and cleared
+ * and that's not true in s_init in this case so we cannot do it there.
+ */
+int board_early_init_f(void)
+{
+	prcm_init();
+	set_mux_conf_regs();
+
+	return 0;
+}
+
 /*
  * This function is the place to do per-board things such as ramp up the
  * MPU clock frequency.
@@ -200,9 +274,7 @@ static void watchdog_disable(void)
 	while (readl(&wdtimer->wdtwwps) != 0x0)
 		;
 }
-#endif
 
-#if defined(CONFIG_SPL_BUILD) || defined(CONFIG_NOR_BOOT)
 void s_init(void)
 {
 	/*
@@ -222,11 +294,10 @@ void s_init(void)
 	save_omap_boot_params();
 #endif
 	watchdog_disable();
-	timer_init();
 	set_uart_mux_conf();
 	setup_clocks_for_console();
 	uart_soft_reset();
-#ifdef CONFIG_NOR_BOOT
+#if defined(CONFIG_NOR_BOOT) || defined(CONFIG_QSPI_BOOT)
 	gd->baudrate = CONFIG_BAUDRATE;
 	serial_init();
 	gd->have_console = 1;
@@ -234,20 +305,13 @@ void s_init(void)
 	gd = &gdata;
 	preloader_console_init();
 #endif
-	prcm_init();
-	set_mux_conf_regs();
 #if defined(CONFIG_SPL_AM33XX_ENABLE_RTC32K_OSC)
 	/* Enable RTC32K clock */
 	rtc32k_enable();
 #endif
+#ifdef CONFIG_SPL_BUILD
+	board_early_init_f();
 	sdram_init();
+#endif
 }
 #endif
-
-#ifndef CONFIG_SYS_DCACHE_OFF
-void enable_caches(void)
-{
-	/* Enable D-cache. I-cache is already enabled in start.S */
-	dcache_enable();
-}
-#endif /* !CONFIG_SYS_DCACHE_OFF */

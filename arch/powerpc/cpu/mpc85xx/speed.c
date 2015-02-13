@@ -37,6 +37,7 @@ void get_sys_info(sys_info_t *sys_info)
 #ifdef CONFIG_SYS_FSL_QORIQ_CHASSIS2
 	int cc_group[12] = CONFIG_SYS_FSL_CLUSTER_CLOCKS;
 #endif
+	__maybe_unused u32 svr;
 
 	const u8 core_cplx_PLL[16] = {
 		[ 0] = 0,	/* CC1 PPL / 1 */
@@ -74,28 +75,33 @@ void get_sys_info(sys_info_t *sys_info)
 	uint ratio[CONFIG_SYS_FSL_NUM_CC_PLLS];
 	unsigned long sysclk = CONFIG_SYS_CLK_FREQ;
 	uint mem_pll_rat;
-#ifdef CONFIG_SYS_FSL_SINGLE_SOURCE_CLK
-	uint single_src;
-#endif
 
 	sys_info->freq_systembus = sysclk;
 #ifdef CONFIG_SYS_FSL_SINGLE_SOURCE_CLK
+	uint ddr_refclk_sel;
+	unsigned int porsr1_sys_clk;
+	porsr1_sys_clk = in_be32(&gur->porsr1) >> FSL_DCFG_PORSR1_SYSCLK_SHIFT
+						& FSL_DCFG_PORSR1_SYSCLK_MASK;
+	if (porsr1_sys_clk == FSL_DCFG_PORSR1_SYSCLK_DIFF)
+		sys_info->diff_sysclk = 1;
+	else
+		sys_info->diff_sysclk = 0;
+
 	/*
 	 * DDR_REFCLK_SEL rcw bit is used to determine if DDR PLLS
 	 * are driven by separate DDR Refclock or single source
 	 * differential clock.
 	 */
-	single_src = (in_be32(&gur->rcwsr[5]) >>
+	ddr_refclk_sel = (in_be32(&gur->rcwsr[5]) >>
 		      FSL_CORENET2_RCWSR5_DDR_REFCLK_SEL_SHIFT) &
 		      FSL_CORENET2_RCWSR5_DDR_REFCLK_SEL_MASK;
 	/*
-	 * For single source clocking, both ddrclock and syclock
+	 * For single source clocking, both ddrclock and sysclock
 	 * are driven by differential sysclock.
 	 */
-	if (single_src == FSL_CORENET2_RCWSR5_DDR_REFCLK_SINGLE_CLK) {
-		printf("Single Source Clock Configuration\n");
+	if (ddr_refclk_sel == FSL_CORENET2_RCWSR5_DDR_REFCLK_SINGLE_CLK)
 		sys_info->freq_ddrbus = CONFIG_SYS_CLK_FREQ;
-	} else
+	else
 #endif
 #ifdef CONFIG_DDR_CLK_FREQ
 		sys_info->freq_ddrbus = CONFIG_DDR_CLK_FREQ;
@@ -107,13 +113,37 @@ void get_sys_info(sys_info_t *sys_info)
 	mem_pll_rat = (in_be32(&gur->rcwsr[0]) >>
 			FSL_CORENET_RCWSR0_MEM_PLL_RAT_SHIFT)
 			& FSL_CORENET_RCWSR0_MEM_PLL_RAT_MASK;
+#ifdef CONFIG_SYS_FSL_ERRATUM_A007212
+	if (mem_pll_rat == 0) {
+		mem_pll_rat = (in_be32(&gur->rcwsr[0]) >>
+			FSL_CORENET_RCWSR0_MEM_PLL_RAT_RESV_SHIFT) &
+			FSL_CORENET_RCWSR0_MEM_PLL_RAT_MASK;
+	}
+#endif
 	/* T4240/T4160 Rev2.0 MEM_PLL_RAT uses a value which is half of
 	 * T4240/T4160 Rev1.0. eg. It's 12 in Rev1.0, however, for Rev2.0
 	 * it uses 6.
+	 * T2080 rev 1.1 and later also use half mem_pll comparing with rev 1.0
 	 */
-#if defined(CONFIG_PPC_T4240) || defined(CONFIG_PPC_T4160)
-	if (SVR_MAJ(get_svr()) >= 2)
-		mem_pll_rat *= 2;
+#if defined(CONFIG_PPC_T4240) || defined(CONFIG_PPC_T4160) || \
+	defined(CONFIG_PPC_T4080) || defined(CONFIG_PPC_T2080)
+	svr = get_svr();
+	switch (SVR_SOC_VER(svr)) {
+	case SVR_T4240:
+	case SVR_T4160:
+	case SVR_T4120:
+	case SVR_T4080:
+		if (SVR_MAJ(svr) >= 2)
+			mem_pll_rat *= 2;
+		break;
+	case SVR_T2080:
+	case SVR_T2081:
+		if ((SVR_MAJ(svr) > 1) || (SVR_MIN(svr) >= 1))
+			mem_pll_rat *= 2;
+		break;
+	default:
+		break;
+	}
 #endif
 	if (mem_pll_rat > 2)
 		sys_info->freq_ddrbus *= mem_pll_rat;
@@ -151,10 +181,13 @@ void get_sys_info(sys_info_t *sys_info)
 		sys_info->freq_processor[cpu] =
 			 freq_c_pll[cplx_pll] / core_cplx_pll_div[c_pll_sel];
 	}
-#if defined(CONFIG_PPC_B4860) || defined(CONFIG_PPC_T2080) || \
-	defined(CONFIG_PPC_T2081)
+#if defined(CONFIG_PPC_B4860) || defined(CONFIG_PPC_B4420) || \
+	defined(CONFIG_PPC_T2080) || defined(CONFIG_PPC_T2081)
 #define FM1_CLK_SEL	0xe0000000
 #define FM1_CLK_SHIFT	29
+#elif defined(CONFIG_PPC_T1024) || defined(CONFIG_PPC_T1023)
+#define FM1_CLK_SEL	0x00000007
+#define FM1_CLK_SHIFT	0
 #else
 #define PME_CLK_SEL	0xe0000000
 #define PME_CLK_SHIFT	29
@@ -162,7 +195,11 @@ void get_sys_info(sys_info_t *sys_info)
 #define FM1_CLK_SHIFT	26
 #endif
 #if !defined(CONFIG_FM_PLAT_CLK_DIV) || !defined(CONFIG_PME_PLAT_CLK_DIV)
+#if defined(CONFIG_PPC_T1024) || defined(CONFIG_PPC_T1023)
+	rcw_tmp = in_be32(&gur->rcwsr[15]) - 4;
+#else
 	rcw_tmp = in_be32(&gur->rcwsr[7]);
+#endif
 #endif
 
 #ifdef CONFIG_SYS_DPAA_PME
@@ -200,7 +237,10 @@ void get_sys_info(sys_info_t *sys_info)
 #endif
 
 #ifdef CONFIG_SYS_DPAA_QBMAN
-	sys_info->freq_qman = sys_info->freq_systembus / 2;
+#ifndef CONFIG_QBMAN_CLK_DIV
+#define CONFIG_QBMAN_CLK_DIV	2
+#endif
+	sys_info->freq_qman = sys_info->freq_systembus / CONFIG_QBMAN_CLK_DIV;
 #endif
 
 #ifdef CONFIG_SYS_DPAA_FMAN
@@ -336,6 +376,10 @@ void get_sys_info(sys_info_t *sys_info)
 
 #endif /* CONFIG_SYS_FSL_QORIQ_CHASSIS2 */
 
+#ifdef CONFIG_U_QE
+	sys_info->freq_qe =  sys_info->freq_systembus / 2;
+#endif
+
 #else /* CONFIG_FSL_CORENET */
 	uint plat_ratio, e500_ratio, half_freq_systembus;
 	int i;
@@ -413,7 +457,7 @@ void get_sys_info(sys_info_t *sys_info)
 #endif
 
 #if defined(CONFIG_FSL_IFC)
-	ccr = in_be32(&ifc_regs->ifc_ccr);
+	ccr = ifc_in32(&ifc_regs->ifc_ccr);
 	ccr = ((ccr & IFC_CCR_CLK_DIV_MASK) >> IFC_CCR_CLK_DIV_SHIFT) + 1;
 
 	sys_info->freq_localbus = sys_info->freq_systembus / ccr;

@@ -118,7 +118,6 @@ void usb_phy_power(int on)
 void omap_usb3_phy_init(struct omap_usb3_phy *phy_regs)
 {
 	omap_usb_dpll_lock(phy_regs);
-
 	usb3_phy_partial_powerup(phy_regs);
 	/*
 	 * Give enough time for the PHY to partially power-up before
@@ -126,7 +125,6 @@ void omap_usb3_phy_init(struct omap_usb3_phy *phy_regs)
 	 * team.
 	 */
 	mdelay(100);
-	usb3_phy_power(1);
 }
 
 static void omap_enable_usb3_phy(struct omap_xhci *omap)
@@ -222,7 +220,22 @@ static void am437x_enable_usb2_phy2(struct omap_xhci *omap)
 
 void usb_phy_power(int on)
 {
-	return;
+	u32 val;
+
+	/* USB1_CTRL */
+	val = readl(USB1_CTRL);
+	if (on) {
+		/*
+		 * these bits are re-used on AM437x to power up/down the USB
+		 * CM and OTG PHYs, if we don't toggle them, USB will not be
+		 * functional on newer silicon revisions
+		 */
+		val &= ~(USB1_CTRL_CM_PWRDN | USB1_CTRL_OTG_PWRDN);
+	} else {
+		val |= USB1_CTRL_CM_PWRDN | USB1_CTRL_OTG_PWRDN;
+	}
+
+	writel(val, USB1_CTRL);
 }
 #endif /* CONFIG_AM437X_USB2PHY2_HOST */
 

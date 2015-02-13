@@ -164,8 +164,8 @@ static int enable_controller(struct r8a66597 *r8a66597)
 
 	r8a66597_bset(r8a66597, INTL, SOFCFG);
 	r8a66597_write(r8a66597, 0, INTENB0);
-	r8a66597_write(r8a66597, 0, INTENB1);
-	r8a66597_write(r8a66597, 0, INTENB2);
+	for (port = 0; port < R8A66597_MAX_ROOT_HUB; port++)
+		r8a66597_write(r8a66597, 0, get_intenb_reg(port));
 
 	r8a66597_bset(r8a66597, CONFIG_R8A66597_ENDIAN & BIGEND, CFIFOSEL);
 	r8a66597_bset(r8a66597, CONFIG_R8A66597_ENDIAN & BIGEND, D0FIFOSEL);
@@ -550,9 +550,6 @@ static int check_usb_device_connecting(struct r8a66597 *r8a66597)
 	return -1;	/* fail */
 }
 
-/* based on usb_ohci.c */
-#define min_t(type, x, y) \
-		({ type __x = (x); type __y = (y); __x < __y ? __x : __y; })
 /*-------------------------------------------------------------------------*
  * Virtual Root Hub
  *-------------------------------------------------------------------------*/
@@ -807,7 +804,7 @@ int usb_lowlevel_init(int index, enum usb_init_type init, void **controller)
 
 	R8A66597_DPRINT("%s\n", __func__);
 
-	memset(r8a66597, 0, sizeof(r8a66597));
+	memset(r8a66597, 0, sizeof(*r8a66597));
 	r8a66597->reg = CONFIG_R8A66597_BASE_ADDR;
 
 	disable_controller(r8a66597);

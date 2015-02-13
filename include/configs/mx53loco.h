@@ -22,6 +22,8 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
 
+#define CONFIG_SYS_GENERIC_BOARD
+
 /* Size of malloc() pool */
 #define CONFIG_SYS_MALLOC_LEN		(10 * 1024 * 1024)
 
@@ -80,7 +82,7 @@
 #define CONFIG_POWER_I2C
 #define CONFIG_DIALOG_POWER
 #define CONFIG_POWER_FSL
-#define CONFIG_PMIC_FSL_MC13892
+#define CONFIG_POWER_FSL_MC13892
 #define CONFIG_SYS_DIALOG_PMIC_I2C_ADDR	0x48
 #define CONFIG_SYS_FSL_PMIC_I2C_ADDR	0x8
 
@@ -92,6 +94,7 @@
 /* Command definition */
 #include <config_cmd_default.h>
 #define CONFIG_CMD_BOOTZ
+#define CONFIG_SUPPORT_RAW_INITRD
 
 #undef CONFIG_CMD_IMLS
 
@@ -105,7 +108,6 @@
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"script=boot.scr\0" \
 	"image=zImage\0" \
-	"fdt_file=imx53-qsb.dtb\0" \
 	"fdt_addr=0x71000000\0" \
 	"boot_fdt=try\0" \
 	"ip_dyn=yes\0" \
