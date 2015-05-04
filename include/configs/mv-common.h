@@ -94,6 +94,7 @@
 #define CONFIG_SYS_RESET_ADDRESS 0xffff0000	/* Rst Vector Adr */
 #define CONFIG_SYS_MAXARGS	16	/* max number of command args */
 #define CONFIG_SYS_64BIT_LBA
+#define CONFIG_PREBOOT
 
 /* ====> Include platform Common Definitions */
 #include <asm/arch/config.h>
@@ -152,6 +153,8 @@
 #define CONFIG_MTD_PARTITIONS
 #define CONFIG_CMD_MTDPARTS
 #define CONFIG_LZO
+#define CONFIG_PARTITION_UUIDS
+#define CONFIG_CMD_PART
 #endif
 
 #if defined(CONFIG_KIRKWOOD) && defined(CONFIG_CMD_MMC)
