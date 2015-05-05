@@ -104,58 +104,81 @@
 	"mtdparts=orion_nand:1M(u-boot),-(rootfs)\0"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"console=ttyS0\0" \
-	"mtdids=nand0=orion_nand\0" \
+	"bootfilez=zImage\0" \
+	"bootfilem=uImage\0" \
+	"bootdir=/boot\0" \
+	"console=ttyS0,115200\0" \
+	"ethact=egiga0\0" \
+	"rdaddr=0x1100000\0" \
+	"loadaddr=0x810000\0" \
+	"rdfile=initramfs-linux.img\0" \
+	"fdtaddr=0x800000\0" \
+	"fdtfile=kirkwood-goflexhome.dtb\0" \
+	"fdtdir=/boot/dtbs\0" \
+	"optargs=\0" \
 	"mtdparts="CONFIG_MTDPARTS \
-	"zimage=/boot/zImage\0" \
-	"uimage=/boot/uImage\0" \
-	"fdt_file=/boot/dtbs/kirkwood-goflexnet.dtb\0" \
-	"fdt_addr=0x800000\0" \
-	"setargs=setenv bootargs console=${console},${baudrate} " \
-		"${optargs} " \
-		"root=/dev/sd${letter}1 rw rootwait " \
-		"${mtdparts}\0" \
-	"loadbootenv=load ${type} ${disk}:1 ${loadaddr} /boot/uEnv.txt\0" \
-	"importbootenv=echo Importing environment (uEnv.txt)...; " \
-		"env import -t $loadaddr $filesize\0" \
-	"loaduimage=load ${type} ${disk}:1 ${loadaddr} ${uimage}\0" \
-	"loadzimage=load ${type} ${disk}:1 ${loadaddr} ${zimage}\0" \
-	"loadfdt=load ${type} ${disk}:1 ${fdt_addr} ${fdt_file}\0" \
-	"bootz=echo Booting from ${disk} ...; " \
-		"run setargs; " \
-		"bootz ${loadaddr} - ${fdt_addr};\0" \
-	"bootm=echo Booting from ${disk} ...; " \
-		"run setargs; " \
-		"bootm ${loadaddr};\0" \
-	"load=echo Attempting to boot from ${type} ${disk}:1...;" \
-		"if run loadbootenv; then " \
-			"run importbootenv;" \
-		"fi;" \
-		"echo Checking if uenvcmd is set ...;" \
-		"if test -n $uenvcmd; then " \
-			"echo Running uenvcmd ...;" \
-			"run uenvcmd;" \
-		"fi;" \
-		"echo Running default loadzimage ...;" \
-		"if run loadzimage; then " \
-			"run loadfdt;" \
-			"run bootz;" \
-		"fi;" \
-		"echo Running default loaduimage ...;" \
-		"if run loaduimage; then " \
-			"run bootm;" \
-		"fi;\0"
+	"mtdids=nand0=orion_nand\0" \
+	"mainargs=setenv bootargs console=${console} ${mtdparts} " \
+		"root=${root} rw rootwait " \
+		"${optargs}\0 " \
+	"loadimage=load ${devtype} ${bootpart} ${loadaddr} ${bootdir}/${bootfilez} || load ${devtype} ${bootpart} ${loadaddr} ${bootdir}/${bootfilem}\0" \
+	"loadrd=load ${devtype} ${bootpart} ${rdaddr} ${bootdir}/${rdfile}\0" \
+	"loadfdt=echo loading ${fdtdir}/${fdtfile} ...; load ${devtype} ${bootpart} ${fdtaddr} ${fdtdir}/${fdtfile}\0" \
+	"mountubi=ubi part rootfs; ubifsmount ubi0:rootfs\0" \
+	"startboot=usb start; ide reset; " \
+		"for devtype in usb ide; do " \
+			"setenv devnum 0; " \
+			"while ${devtype} dev ${devnum}; do " \
+				"echo ${devtype} found on device ${devnum}; " \
+				"setenv bootpart ${devnum}:1; " \
+				"echo Checking for: ${bootdir}/uEnv.txt ...; " \
+				"if test -e ${devtype} ${bootpart} ${bootdir}/uEnv.txt; then " \
+					"load ${devtype} ${bootpart} ${loadaddr} ${bootdir}/uEnv.txt; " \
+					"env import -t ${loadaddr} ${filesize}; " \
+					"echo Loaded environment from ${bootdir}/uEnv.txt; " \
+					"echo Checking if uenvcmd is set ...; " \
+					"if test -n ${uenvcmd}; then " \
+						"echo Running uenvcmd ...; " \
+						"run uenvcmd; " \
+					"fi; " \
+				"fi; " \
+				"if run loadimage; then " \
+					"if env exists root; then " \
+						"echo root has been defined by user; " \ 
+					"else " \
+						"part uuid ${devtype} ${bootpart} uuid; " \
+						"setenv root PARTUUID=${uuid}; " \
+                                        "fi; " \
+					"run mainargs; " \
+					"if run loadfdt; then " \
+						"if run loadrd; then " \
+							"bootz ${loadaddr} ${rdaddr}:${filesize} ${fdtaddr}; " \
+						"else " \
+							"bootz ${loadaddr} - ${fdtaddr}; " \
+						"fi; " \
+					"else " \
+						"if run loadrd; then " \
+							"bootm ${loadaddr} ${rdaddr}:${filesize}; " \
+						"else " \
+							"bootm ${loadaddr}; " \
+						"fi; " \
+					"fi; " \
+				"else " \
+					"echo No kernel found; " \
+				"fi; " \
+				"setexpr devnum ${devnum} + 1; " \
+			"done; " \
+		"done;\0" \
+		"bootubi=echo Trying to boot from NAND ...; " \
+		"if run mountubi; then " \
+			"ubifsload ${loadaddr} /boot/zImage;ubifsload ${fdtaddr} /boot/dtbs/${fdtfile}; " \
+			"ubifsumount; " \
+			"setenv bootargs console=${console} ubi.mtd=1 root=ubi0:rootfs ro rootfstype=ubifs  rootwait ${mtdparts}; " \
+			"bootz ${loadaddr} - ${fdtaddr}; " \
+                "fi\0"
 
 #define CONFIG_BOOTCOMMAND \
-	"ide reset; usb start; setenv letter 9;" \
-	"for type in ide usb; do " \
-		"for disk in 0; do " \
-			"if ${type} part ${disk};then " \
-				"setexpr letter $letter + 1;" \
-				"run load;" \
-			"fi;" \
-		"done;" \
-	"done;"
+        "run startboot; run bootubi"
 
 /*
  * Ethernet Driver configuration
