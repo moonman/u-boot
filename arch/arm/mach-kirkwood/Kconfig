@@ -66,6 +66,9 @@ config TARGET_GOFLEXNET
 config TARGET_NAS220
 	bool "BlackArmor NAS220"
 
+config TARGET_NSA325
+	bool "Zyxel NSA325 NAS"
+
 endchoice
 
 config SYS_SOC
@@ -92,5 +95,6 @@ source "board/Seagate/dockstar/Kconfig"
 source "board/Seagate/goflexhome/Kconfig"
 source "board/Seagate/goflexnet/Kconfig"
 source "board/Seagate/nas220/Kconfig"
+source "board/zyxel/nsa325/Kconfig"
 
 endif
