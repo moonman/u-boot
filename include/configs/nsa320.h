@@ -148,7 +148,7 @@
 				"fi; " \
 				"if run loadimage; then " \
 					"if env exists root; then " \
-						"echo root has been defined by user; " \ 
+						"echo root has been defined by user; " \
 					"else " \
 						"part uuid ${devtype} ${bootpart} uuid; " \
 						"setenv root PARTUUID=${uuid}; " \
