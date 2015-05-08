@@ -157,11 +157,15 @@
 #define CONFIG_CMD_PART
 #endif
 
-#if defined(CONFIG_KIRKWOOD) && defined(CONFIG_CMD_MMC)
+/*
+ * SDIO/MMC Card Configuration
+ */
+#ifdef CONFIG_CMD_MMC
 #define CONFIG_MMC
 #define CONFIG_GENERIC_MMC
-#define CONFIG_KIRKWOOD_MMC
+#define CONFIG_MVEBU_MMC
 #define CONFIG_SYS_MMC_BASE KW_SDIO_BASE
-#endif /* defined(CONFIG_KIRKWOOD) && defined(CONFIG_MMC) */
+#endif /* CONFIG_CMD_MMC */
+
 
 #endif /* _MV_COMMON_H */

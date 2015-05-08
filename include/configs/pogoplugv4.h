@@ -30,6 +30,8 @@
 #ifndef _CONFIG_POGOPLUGV4_H
 #define _CONFIG_POGOPLUGV4_H
 
+#define CONFIG_SYS_GENERIC_BOARD
+
 /*
  * Machine type definition and ID
  */
@@ -59,17 +61,12 @@
 #define CONFIG_CMD_NAND
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_USB
+#define CONFIG_CMD_IDE
 #define CONFIG_SYS_MVFS /* Picks up Filesystem from mv-common.h */
 #define CONFIG_CMD_BOOTZ
 #define CONFIG_CMD_SETEXPR
 #define CONFIG_SUPPORT_RAW_INITRD
 #define CONFIG_OF_LIBFDT
-
-#define CONFIG_CMD_DATE
-#define CONFIG_CMD_IDE
-#define CONFIG_SYS_LONGHELP
-#define CONFIG_AUTO_COMPLETE
-#define CONFIG_CMDLINE_EDITING
 
 /*
  * mv-common.h should be defined after CMD configs since it used them
@@ -195,31 +192,6 @@
 #ifdef CONFIG_MVSATA_IDE
 #define CONFIG_SYS_ATA_IDE0_OFFSET	MV_SATA_PORT0_OFFSET
 #endif
-
-/*
- * Device Tree
- */
-
-#define CONFIG_OF_LIBFDT
-
-/*
- * EFI partition
- */
-
-#define CONFIG_EFI_PARTITION
-
-/*
- *  Date Time
- *   */
-#ifdef CONFIG_CMD_DATE
-#define CONFIG_RTC_MV
-#define CONFIG_CMD_SNTP
-#define CONFIG_CMD_DNS
-#endif /* CONFIG_CMD_DATE */
-
-/*
- *
- */
 
 #define CONFIG_KIRKWOOD_GPIO
 

@@ -38,6 +38,7 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_ENV
 #define CONFIG_CMD_MII
+#define CONFIG_CMD_MMC
 #define CONFIG_CMD_NAND
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_USB
@@ -101,7 +102,7 @@
 	"loadfdt=echo loading ${fdtdir}/${fdtfile} ...; load ${devtype} ${bootpart} ${fdtaddr} ${fdtdir}/${fdtfile}\0" \
 	"mountubi=ubi part rootfs; ubifsmount ubi0:rootfs\0" \
 	"startboot=usb start; ide reset; " \
-		"for devtype in usb ide; do " \
+		"for devtype in mmc usb ide; do " \
 			"setenv devnum 0; " \
 			"while ${devtype} dev ${devnum}; do " \
 				"echo ${devtype} found on device ${devnum}; " \
