@@ -70,7 +70,7 @@
  */
 #define CONFIG_ENV_SIZE			0x20000	/* 128k */
 #define CONFIG_ENV_ADDR			0xc0000
-#define CONFIG_ENV_OFFSET		0xE0000	/* env starts here */
+#define CONFIG_ENV_OFFSET		0xc0000	/* env starts here */
 #define CONFIG_LOADADDR			0x810000
 
 /*
