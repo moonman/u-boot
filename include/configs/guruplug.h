@@ -1,4 +1,7 @@
 /*
+ * Copyright (C) 2015 Oleg Rakhmanov <oleg@archlinuxarm.org>
+ *
+ * Based on
  * (C) Copyright 2009-2014
  * Gerald Kerma <dreagle@doukki.net>
  * Marvell Semiconductor <www.marvell.com>
@@ -15,7 +18,7 @@
 /*
  * Version number information
  */
-#define CONFIG_IDENT_STRING	"\nMarvell-GuruPlug"
+#define CONFIG_IDENT_STRING	" Arch Linux ARM\nMarvell GuruPlug"
 
 /*
  * High Level Configuration Options (easy to change)
@@ -26,36 +29,24 @@
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* disable board lowlevel_init */
 
 /*
- * Compression configuration
- */
-#define CONFIG_BZIP2
-#define CONFIG_LZMA
-#define CONFIG_LZO
-
-/*
- * Enable device tree support
- */
-#define CONFIG_OF_LIBFDT
-
-/*
- * Miscellaneous configurable options
- */
-#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser */
-
-/*
  * Commands configuration
  */
 #define CONFIG_SYS_NO_FLASH		/* Declare no flash (NOR/SPI) */
+#define CONFIG_CONSOLE_MUX
+#define CONFIG_SYS_CONSOLE_IS_IN_ENV
 #include <config_cmd_default.h>
-#define CONFIG_CMD_BOOTZ
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_ENV
-#define CONFIG_CMD_IDE
 #define CONFIG_CMD_MII
 #define CONFIG_CMD_NAND
 #define CONFIG_CMD_PING
 #define CONFIG_CMD_USB
-#define CONFIG_CMD_FAT
+#define CONFIG_CMD_IDE
+#define CONFIG_SYS_MVFS         /* Picks up Filesystem from mv-common.h */
+#define CONFIG_CMD_BOOTZ
+#define CONFIG_CMD_SETEXPR
+#define CONFIG_SUPPORT_RAW_INITRD
+#define CONFIG_OF_LIBFDT
 
 /*
  * mv-common.h should be defined after CMD configs since it used them
@@ -77,38 +68,92 @@
  * it has to be rounded to sector size
  */
 #define CONFIG_ENV_SIZE			0x20000	/* 128k */
+#define CONFIG_ENV_ADDR			0xc0000
 #define CONFIG_ENV_OFFSET		0xE0000	/* env starts here */
+#define CONFIG_LOADADDR			0x810000
 
 /*
  * Default environment variables
  */
-#define CONFIG_BOOTCOMMAND \
-	"setenv bootargs ${console} ${mtdparts} ${bootargs_root}; "	\
-	"ubi part root; "						\
-	"ubifsmount ubi:rootfs; "					\
-	"ubifsload 0x800000 ${kernel}; "				\
-	"ubifsload 0x700000 ${fdt}; "					\
-	"ubifsumount; "							\
-	"fdt addr 0x700000; fdt resize; fdt chosen; "			\
-	"bootz 0x800000 - 0x700000"
-
-#define CONFIG_MTDPARTS	\
-	"mtdparts=orion_nand:"						\
-	"896K(uboot),128K(uboot_env),"					\
-	"-@1M(root)\0"
+#define CONFIG_MTDPARTS \
+	"mtdparts=orion_nand:1M(u-boot),-(rootfs)\0"
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"console=console=ttyS0,115200\0"				\
-	"mtdids=nand0=orion_nand\0"					\
-	"mtdparts="CONFIG_MTDPARTS					\
-	"kernel=/boot/zImage\0"						\
-	"fdt=/boot/guruplug-server-plus.dtb\0"				\
-	"bootargs_root=ubi.mtd=2 root=ubi0:rootfs rootfstype=ubifs rw\0"
+	"bootfilez=zImage\0" \
+	"bootfilem=uImage\0" \
+	"bootdir=/boot\0" \
+	"console=ttyS0,115200\0" \
+	"ethact=egiga0\0" \
+	"rdaddr=0x1100000\0" \
+	"loadaddr=0x810000\0" \
+	"rdfile=initramfs-linux.img\0" \
+	"fdtaddr=0x800000\0" \
+	"fdtfile=kirkwood-guruplug-server-plus.dtb\0" \
+	"fdtdir=/boot/dtbs\0" \
+	"optargs=\0" \
+	"mtdparts="CONFIG_MTDPARTS \
+	"mtdids=nand0=orion_nand\0" \
+	"mainargs=setenv bootargs console=${console} ${mtdparts} " \
+		"root=${root} rw rootwait " \
+		"${optargs}\0 " \
+	"loadimage=load ${devtype} ${bootpart} ${loadaddr} ${bootdir}/${bootfilez} || load ${devtype} ${bootpart} ${loadaddr} ${bootdir}/${bootfilem}\0" \
+	"loadrd=load ${devtype} ${bootpart} ${rdaddr} ${bootdir}/${rdfile}\0" \
+	"loadfdt=echo loading ${fdtdir}/${fdtfile} ...; load ${devtype} ${bootpart} ${fdtaddr} ${fdtdir}/${fdtfile}\0" \
+	"mountubi=ubi part rootfs; ubifsmount ubi0:rootfs\0" \
+	"startboot=usb start; ide reset; " \
+		"for devtype in usb ide; do " \
+			"setenv devnum 0; " \
+			"while ${devtype} dev ${devnum}; do " \
+				"echo ${devtype} found on device ${devnum}; " \
+				"setenv bootpart ${devnum}:1; " \
+				"echo Checking for: ${bootdir}/uEnv.txt ...; " \
+				"if test -e ${devtype} ${bootpart} ${bootdir}/uEnv.txt; then " \
+					"load ${devtype} ${bootpart} ${loadaddr} ${bootdir}/uEnv.txt; " \
+					"env import -t ${loadaddr} ${filesize}; " \
+					"echo Loaded environment from ${bootdir}/uEnv.txt; " \
+					"echo Checking if uenvcmd is set ...; " \
+					"if test -n ${uenvcmd}; then " \
+						"echo Running uenvcmd ...; " \
+						"run uenvcmd; " \
+					"fi; " \
+				"fi; " \
+				"if run loadimage; then " \
+					"if env exists root; then " \
+						"echo root has been defined by user; " \
+					"else " \
+						"part uuid ${devtype} ${bootpart} uuid; " \
+						"setenv root PARTUUID=${uuid}; " \
+                                        "fi; " \
+					"run mainargs; " \
+					"if run loadfdt; then " \
+						"if run loadrd; then " \
+							"bootz ${loadaddr} ${rdaddr}:${filesize} ${fdtaddr}; " \
+						"else " \
+							"bootz ${loadaddr} - ${fdtaddr}; " \
+						"fi; " \
+					"else " \
+						"if run loadrd; then " \
+							"bootm ${loadaddr} ${rdaddr}:${filesize}; " \
+						"else " \
+							"bootm ${loadaddr}; " \
+						"fi; " \
+					"fi; " \
+				"else " \
+					"echo No kernel found; " \
+				"fi; " \
+				"setexpr devnum ${devnum} + 1; " \
+			"done; " \
+		"done;\0" \
+		"bootubi=echo Trying to boot from NAND ...; " \
+		"if run mountubi; then " \
+			"ubifsload ${loadaddr} /boot/zImage;ubifsload ${fdtaddr} /boot/dtbs/${fdtfile}; " \
+			"ubifsumount; " \
+			"setenv bootargs console=${console} ubi.mtd=1 root=ubi0:rootfs ro rootfstype=ubifs  rootwait ${mtdparts}; " \
+			"bootz ${loadaddr} - ${fdtaddr}; " \
+                "fi\0"
 
-#define MTDIDS_DEFAULT	"nand0=orion_nand"
-
-#define MTDPARTS_DEFAULT	\
-	"mtdparts="CONFIG_MTDPARTS
+#define CONFIG_BOOTCOMMAND \
+        "run startboot; run bootubi"
 
 /*
  * Ethernet Driver configuration
@@ -124,21 +169,5 @@
 #ifdef CONFIG_MVSATA_IDE
 #define CONFIG_SYS_ATA_IDE0_OFFSET	MV_SATA_PORT0_OFFSET
 #endif /*CONFIG_MVSATA_IDE*/
-
-/*
- * File system
- */
-#define CONFIG_CMD_EXT2
-#define CONFIG_CMD_EXT4
-#define CONFIG_CMD_FAT
-#define CONFIG_CMD_JFFS2
-#define CONFIG_CMD_UBI
-#define CONFIG_CMD_UBIFS
-#define CONFIG_RBTREE
-#define CONFIG_MTD_DEVICE
-#define CONFIG_MTD_PARTITIONS
-#define CONFIG_CMD_MTDPARTS
-
-#define CONFIG_SYS_ALT_MEMTEST
 
 #endif /* _CONFIG_GURUPLUG_H */
