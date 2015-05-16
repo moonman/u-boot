@@ -174,6 +174,10 @@
 			"else " \
 				"echo Netconsole has been turned off.; " \
 				"echo To turn it on, set netconsole variable to on.; " \
+				"setenv stdin; " \
+				"setenv stdout; " \
+				"setenv stderr; " \
+				"setenv ncargs; " \
 			"fi\0"
 
 #define CONFIG_BOOTCOMMAND \
