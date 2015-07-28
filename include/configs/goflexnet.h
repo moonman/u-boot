@@ -190,6 +190,7 @@
 					"setenv stdin nc; " \
 					"setenv stdout nc; " \
 					"setenv stderr nc; " \
+                                        "version; " \
 					"if env exists ncargsusr; then " \
 						"echo ncargs has been defined by user; " \
 						"setenv ncargs ${ncargsusr}; " \

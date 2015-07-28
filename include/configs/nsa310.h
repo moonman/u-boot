@@ -97,7 +97,6 @@
 #define CONFIG_ENV_OFFSET		0xc0000	/* env starts here */
 #define CONFIG_LOADADDR			0x810000
 
-
 /*
  * Default environment variables
  */
@@ -121,7 +120,8 @@
 	"mtdids=nand0=orion_nand\0" \
 	"mainargs=setenv bootargs console=${console} ${mtdparts} " \
 		"root=${root} rw rootwait " \
-		"${optargs}\0 " \
+		"${optargs} " \
+                "${ncargs}\0" \
 	"loadimage=load ${devtype} ${bootpart} ${loadaddr} ${bootdir}/${bootfilez} || load ${devtype} ${bootpart} ${loadaddr} ${bootdir}/${bootfilem}\0" \
 	"loadrd=load ${devtype} ${bootpart} ${rdaddr} ${bootdir}/${rdfile}\0" \
 	"loadfdt=echo loading ${fdtdir}/${fdtfile} ...; load ${devtype} ${bootpart} ${fdtaddr} ${fdtdir}/${fdtfile}\0" \
@@ -176,7 +176,33 @@
 			"ubifsumount; " \
 			"setenv bootargs console=${console} ubi.mtd=1 root=ubi0:rootfs ro rootfstype=ubifs  rootwait ${mtdparts}; " \
 			"bootz ${loadaddr} - ${fdtaddr}; " \
-                "fi\0"
+                "fi\0" \
+	"ncip=10.10.10.5\0" \
+	"ipaddr=10.10.10.3\0" \
+	"ncipk=10.10.10.4\0" \
+	"netconsole=on\0" \
+	"ncargsusr=\0" \
+	"preboot=if env exists netconsole && test ${netconsole} = on; then " \
+				"if ping ${ncip}; then " \
+					"setenv stdin nc; " \
+					"setenv stdout nc; " \
+					"setenv stderr nc; " \
+					"version; " \
+					"if env exists ncargsusr; then " \
+						"echo ncargs has been defined by user; " \
+						"setenv ncargs ${ncargsusr}; " \
+					"else " \
+						"setenv ncargs ignore_loglevel netconsole=6665@${ipaddr}/eth0,6666@${ncipk}/; " \
+					"fi; " \
+				"fi; " \
+			"else " \
+				"echo Netconsole has been turned off.; " \
+				"echo To turn it on, set netconsole variable to on.; " \
+				"setenv stdin; " \
+				"setenv stdout; " \
+				"setenv stderr; " \
+				"setenv ncargs; " \
+			"fi\0"
 
 #define CONFIG_BOOTCOMMAND \
         "run startboot; run bootubi"
