@@ -66,6 +66,9 @@ config TARGET_GOFLEXNET
 config TARGET_NAS220
 	bool "BlackArmor NAS220"
 
+config TARGET_NSA310
+        bool "Zyxel NSA310 NAS"
+
 config TARGET_NSA320
 	bool "Zyxel NSA320 NAS"
 
@@ -98,6 +101,7 @@ source "board/Seagate/dockstar/Kconfig"
 source "board/Seagate/goflexhome/Kconfig"
 source "board/Seagate/goflexnet/Kconfig"
 source "board/Seagate/nas220/Kconfig"
+source "board/zyxel/nsa310/Kconfig"
 source "board/zyxel/nsa320/Kconfig"
 source "board/zyxel/nsa325/Kconfig"
 

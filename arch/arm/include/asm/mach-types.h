@@ -1106,6 +1106,7 @@ extern unsigned int __machine_arch_type;
 #define MACH_TYPE_OMAP5_SEVM           3777
 #define MACH_TYPE_ARMADILLO_800EVA     3863
 #define MACH_TYPE_NSA320               3956
+#define MACH_TYPE_NSA310               4022
 #define MACH_TYPE_KZM9G                4140
 #define MACH_TYPE_COLIBRI_T30          4493
 #define MACH_TYPE_NSA325               4495
@@ -14237,6 +14238,18 @@ extern unsigned int __machine_arch_type;
 # define machine_is_nsa320()	(machine_arch_type == MACH_TYPE_NSA320)
 #else
 # define machine_is_nsa320()	(0)
+#endif
+
+#ifdef CONFIG_MACH_NSA310
+# ifdef machine_arch_type
+#  undef machine_arch_type
+#  define machine_arch_type     __machine_arch_type
+# else
+#  define machine_arch_type     MACH_TYPE_NSA310
+# endif
+# define machine_is_nsa310()  (machine_arch_type == MACH_TYPE_NSA310)
+#else
+# define machine_is_nsa310()  (0)
 #endif
 
 #ifdef CONFIG_MACH_KZM9G
