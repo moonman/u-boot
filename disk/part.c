@@ -10,6 +10,7 @@
 #include <ide.h>
 #include <malloc.h>
 #include <part.h>
+#include <ubifs_uboot.h>
 
 #undef	PART_DEBUG
 
@@ -391,6 +392,9 @@ int get_partition_info(block_dev_desc_t *dev_desc, int part,
 	/* The common case is no UUID support */
 	info->uuid[0] = 0;
 #endif
+#ifdef CONFIG_PARTITION_TYPE_GUID
+	info->type_guid[0] = 0;
+#endif
 
 	switch (dev_desc->part_type) {
 #ifdef CONFIG_MAC_PARTITION
@@ -489,6 +493,16 @@ int get_device(const char *ifname, const char *dev_hwpart_str,
 		goto cleanup;
 	}
 
+#ifdef HAVE_BLOCK_DEVICE
+	/*
+	 * Updates the partition table for the specified hw partition.
+	 * Does not need to be done for hwpart 0 since it is default and
+	 * already loaded.
+	 */
+	if(hwpart != 0)
+		init_part(*dev_desc);
+#endif
+
 cleanup:
 	free(dup_str);
 	return dev;
@@ -511,6 +525,11 @@ int get_device_and_partition(const char *ifname, const char *dev_part_str,
 	int part;
 	disk_partition_t tmpinfo;
 
+#if defined CONFIG_SANDBOX && defined CONFIG_CMD_UBIFS
+#error Only one of CONFIG_SANDBOX and CONFIG_CMD_UBIFS may be selected
+#endif
+
+#ifdef CONFIG_SANDBOX
 	/*
 	 * Special-case a pseudo block device "hostfs", to allow access to the
 	 * host's own filesystem.
@@ -526,9 +545,35 @@ int get_device_and_partition(const char *ifname, const char *dev_part_str,
 #ifdef CONFIG_PARTITION_UUIDS
 		info->uuid[0] = 0;
 #endif
+#ifdef CONFIG_PARTITION_TYPE_GUID
+		info->type_guid[0] = 0;
+#endif
 
 		return 0;
 	}
+#endif
+
+#ifdef CONFIG_CMD_UBIFS
+	/*
+	 * Special-case ubi, ubi goes through a mtd, rathen then through
+	 * a regular block device.
+	 */
+	if (0 == strcmp(ifname, "ubi")) {
+		if (!ubifs_is_mounted()) {
+			printf("UBIFS not mounted, use ubifsmount to mount volume first!\n");
+			return -1;
+		}
+
+		*dev_desc = NULL;
+		memset(info, 0, sizeof(*info));
+		strcpy((char *)info->type, BOOT_PART_TYPE);
+		strcpy((char *)info->name, "UBI");
+#ifdef CONFIG_PARTITION_UUIDS
+		info->uuid[0] = 0;
+#endif
+		return 0;
+	}
+#endif
 
 	/* If no dev_part_str, use bootdevice environment variable */
 	if (!dev_part_str || !strlen(dev_part_str) ||
@@ -609,6 +654,9 @@ int get_device_and_partition(const char *ifname, const char *dev_part_str,
 		strcpy((char *)info->name, "Whole Disk");
 #ifdef CONFIG_PARTITION_UUIDS
 		info->uuid[0] = 0;
+#endif
+#ifdef CONFIG_PARTITION_TYPE_GUID
+		info->type_guid[0] = 0;
 #endif
 
 		ret = 0;

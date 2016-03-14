@@ -12,6 +12,7 @@ endif
 obj-$(CONFIG_DM_GPIO)		+= gpio-uclass.o
 
 obj-$(CONFIG_AT91_GPIO)	+= at91_gpio.o
+obj-$(CONFIG_ATMEL_PIO4)	+= atmel_pio4.o
 obj-$(CONFIG_INTEL_ICH6_GPIO)	+= intel_ich6_gpio.o
 obj-$(CONFIG_KIRKWOOD_GPIO)	+= kw_gpio.o
 obj-$(CONFIG_KONA_GPIO)	+= kona_gpio.o
@@ -42,7 +43,8 @@ oby-$(CONFIG_SX151X)		+= sx151x.o
 obj-$(CONFIG_SUNXI_GPIO)	+= sunxi_gpio.o
 obj-$(CONFIG_LPC32XX_GPIO)	+= lpc32xx_gpio.o
 obj-$(CONFIG_STM32_GPIO)	+= stm32_gpio.o
+obj-$(CONFIG_GPIO_UNIPHIER)	+= gpio-uniphier.o
 obj-$(CONFIG_ZYNQ_GPIO)		+= zynq_gpio.o
 obj-$(CONFIG_VYBRID_GPIO)	+= vybrid_gpio.o
 obj-$(CONFIG_HIKEY_GPIO)	+= hi6220_gpio.o
-
+obj-$(CONFIG_PIC32_GPIO)	+= pic32_gpio.o

@@ -24,6 +24,7 @@ enum {
 	BOOT_DEVICE_NOR,
 	BOOT_DEVICE_UART,
 	BOOT_DEVICE_SPI,
+	BOOT_DEVICE_USB,
 	BOOT_DEVICE_SATA,
 	BOOT_DEVICE_I2C,
 	BOOT_DEVICE_BOARD,
@@ -31,8 +32,14 @@ enum {
 };
 #endif
 
-/* Board-specific load method */
-void spl_board_load_image(void);
+/**
+ * Board specific load method for boards that have a special way of loading
+ * U-Boot, which does not fit with the existing SPL code.
+ *
+ * @return 0 on success, negative errno value on failure.
+ */
+
+int spl_board_load_image(void);
 
 /* Linker symbols. */
 extern char __bss_start[], __bss_end[];

@@ -401,8 +401,6 @@ unsigned long get_board_ddr_clk(void);
 /*
  * eSPI - Enhanced SPI
  */
-#define CONFIG_FSL_ESPI
-#define CONFIG_SPI_FLASH_SST
 #define CONFIG_CMD_SF
 #define CONFIG_SF_DEFAULT_SPEED         10000000
 #define CONFIG_SF_DEFAULT_MODE          0
@@ -645,9 +643,5 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_BOOTCOMMAND		CONFIG_LINUX
 
 #include <asm/fsl_secure_boot.h>
-
-#ifdef CONFIG_SECURE_BOOT
-#define CONFIG_CMD_BLOB
-#endif
 
 #endif	/* __CONFIG_H */

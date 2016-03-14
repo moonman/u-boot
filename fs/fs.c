@@ -1,17 +1,7 @@
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #include <config.h>
@@ -23,6 +13,7 @@
 #include <fat.h>
 #include <fs.h>
 #include <sandboxfs.h>
+#include <ubifs_uboot.h>
 #include <asm/io.h>
 #include <div64.h>
 #include <linux/math64.h>
@@ -154,6 +145,21 @@ static struct fstype_info fstypes[] = {
 		.size = sandbox_fs_size,
 		.read = fs_read_sandbox,
 		.write = fs_write_sandbox,
+		.uuid = fs_uuid_unsupported,
+	},
+#endif
+#ifdef CONFIG_CMD_UBIFS
+	{
+		.fstype = FS_TYPE_UBIFS,
+		.name = "ubifs",
+		.null_dev_desc_ok = true,
+		.probe = ubifs_set_blk_dev,
+		.close = ubifs_close,
+		.ls = ubifs_ls,
+		.exists = ubifs_exists,
+		.size = ubifs_size,
+		.read = ubifs_read,
+		.write = fs_write_unsupported,
 		.uuid = fs_uuid_unsupported,
 	},
 #endif
@@ -411,6 +417,7 @@ int do_load(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[],
 	}
 	puts("\n");
 
+	setenv_hex("fileaddr", addr);
 	setenv_hex("filesize", len_read);
 
 	return 0;

@@ -14,11 +14,7 @@
  *
  * This file is part of the Inventra Controller Driver for Linux.
  *
- * The Inventra Controller Driver for Linux is free software; you
- * can redistribute it and/or modify it under the terms of the GNU
- * General Public License version 2 as published by the Free Software
- * Foundation.
- *
+ * SPDX-License-Identifier:	GPL-2.0
  */
 #include <common.h>
 #include <asm/arch/cpu.h>
@@ -166,6 +162,17 @@ static void USBC_ConfigFIFO_Base(void)
 }
 
 /******************************************************************************
+ * Needed for the DFU polling magic
+ ******************************************************************************/
+
+static u8 last_int_usb;
+
+bool dfu_usb_get_reset(void)
+{
+	return !!(last_int_usb & MUSB_INTR_RESET);
+}
+
+/******************************************************************************
  * MUSB Glue code
  ******************************************************************************/
 
@@ -176,6 +183,7 @@ static irqreturn_t sunxi_musb_interrupt(int irq, void *__hci)
 
 	/* read and flush interrupts */
 	musb->int_usb = musb_readb(musb->mregs, MUSB_INTRUSB);
+	last_int_usb = musb->int_usb;
 	if (musb->int_usb)
 		musb_writeb(musb->mregs, MUSB_INTRUSB, musb->int_usb);
 	musb->int_tx = musb_readw(musb->mregs, MUSB_INTRTX);

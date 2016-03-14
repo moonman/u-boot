@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for BF518F EZBrd board
+ * U-Boot - Configuration file for BF518F EZBrd board
  */
 
 #ifndef __CONFIG_BF518F_EZBRD_H__
@@ -105,8 +105,6 @@
 #define CONFIG_BFIN_SPI
 #define CONFIG_ENV_SPI_MAX_HZ	30000000
 #define CONFIG_SF_DEFAULT_SPEED	30000000
-#define CONFIG_SPI_FLASH_SST
-#define CONFIG_SPI_FLASH_STMICRO
 
 
 /*

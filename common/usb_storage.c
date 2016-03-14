@@ -65,7 +65,6 @@ static const unsigned char us_direction[256/8] = {
 static ccb usb_ccb __attribute__((aligned(ARCH_DMA_MINALIGN)));
 static __u32 CBWTag;
 
-#define USB_MAX_STOR_DEV 5
 static int usb_max_devs; /* number of highest available usb device */
 
 static block_dev_desc_t usb_dev_desc[USB_MAX_STOR_DEV];
@@ -119,10 +118,10 @@ int usb_stor_get_info(struct usb_device *dev, struct us_data *us,
 		      block_dev_desc_t *dev_desc);
 int usb_storage_probe(struct usb_device *dev, unsigned int ifnum,
 		      struct us_data *ss);
-unsigned long usb_stor_read(int device, lbaint_t blknr,
-			    lbaint_t blkcnt, void *buffer);
-unsigned long usb_stor_write(int device, lbaint_t blknr,
-			     lbaint_t blkcnt, const void *buffer);
+static unsigned long usb_stor_read(block_dev_desc_t *block_dev, lbaint_t blknr,
+				   lbaint_t blkcnt, void *buffer);
+static unsigned long usb_stor_write(block_dev_desc_t *block_dev, lbaint_t blknr,
+				    lbaint_t blkcnt, const void *buffer);
 void uhci_show_temp_int_td(void);
 
 #ifdef CONFIG_PARTITIONS
@@ -1027,9 +1026,10 @@ static void usb_bin_fixup(struct usb_device_descriptor descriptor,
 }
 #endif /* CONFIG_USB_BIN_FIXUP */
 
-unsigned long usb_stor_read(int device, lbaint_t blknr,
-			    lbaint_t blkcnt, void *buffer)
+static unsigned long usb_stor_read(block_dev_desc_t *block_dev, lbaint_t blknr,
+				   lbaint_t blkcnt, void *buffer)
 {
+	int device = block_dev->dev;
 	lbaint_t start, blks;
 	uintptr_t buf_addr;
 	unsigned short smallblks;
@@ -1097,9 +1097,10 @@ retry_it:
 	return blkcnt;
 }
 
-unsigned long usb_stor_write(int device, lbaint_t blknr,
-				lbaint_t blkcnt, const void *buffer)
+static unsigned long usb_stor_write(block_dev_desc_t *block_dev, lbaint_t blknr,
+				    lbaint_t blkcnt, const void *buffer)
 {
+	int device = block_dev->dev;
 	lbaint_t start, blks;
 	uintptr_t buf_addr;
 	unsigned short smallblks;
@@ -1177,24 +1178,8 @@ int usb_storage_probe(struct usb_device *dev, unsigned int ifnum,
 	struct usb_endpoint_descriptor *ep_desc;
 	unsigned int flags = 0;
 
-	int protocol = 0;
-	int subclass = 0;
-
 	/* let's examine the device now */
 	iface = &dev->config.if_desc[ifnum];
-
-#if 0
-	/* this is the place to patch some storage devices */
-	debug("iVendor %X iProduct %X\n", dev->descriptor.idVendor,
-			dev->descriptor.idProduct);
-
-	if ((dev->descriptor.idVendor) == 0x066b &&
-	    (dev->descriptor.idProduct) == 0x0103) {
-		debug("patched for E-USB\n");
-		protocol = US_PR_CB;
-		subclass = US_SC_UFI;	    /* an assumption */
-	}
-#endif
 
 	if (dev->descriptor.bDeviceClass != 0 ||
 			iface->desc.bInterfaceClass != USB_CLASS_MASS_STORAGE ||
@@ -1215,17 +1200,8 @@ int usb_storage_probe(struct usb_device *dev, unsigned int ifnum,
 	ss->ifnum = ifnum;
 	ss->pusb_dev = dev;
 	ss->attention_done = 0;
-
-	/* If the device has subclass and protocol, then use that.  Otherwise,
-	 * take data from the specific interface.
-	 */
-	if (subclass) {
-		ss->subclass = subclass;
-		ss->protocol = protocol;
-	} else {
-		ss->subclass = iface->desc.bInterfaceSubClass;
-		ss->protocol = iface->desc.bInterfaceProtocol;
-	}
+	ss->subclass = iface->desc.bInterfaceSubClass;
+	ss->protocol = iface->desc.bInterfaceProtocol;
 
 	/* set the handler pointers based on the protocol */
 	debug("Transport: ");
@@ -1408,7 +1384,7 @@ int usb_stor_get_info(struct usb_device *dev, struct us_data *ss,
 
 static int usb_mass_storage_probe(struct udevice *dev)
 {
-	struct usb_device *udev = dev_get_parentdata(dev);
+	struct usb_device *udev = dev_get_parent_priv(dev);
 	int ret;
 
 	usb_disable_asynch(1); /* asynch transfer not allowed */

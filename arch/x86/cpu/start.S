@@ -123,17 +123,13 @@ car_init_ret:
 #endif
 	/* Set up global data */
 	mov	%esp, %eax
-	call	board_init_f_mem
+	call	board_init_f_alloc_reserve
 	mov	%eax, %esp
+	call	board_init_f_init_reserve
 
-	/*
-	 * Debug UART is available here although it may not be plumbed out
-	 * to pins depending on the board. To use it:
-	 *
-	 * call  debug_uart_init
-	 * mov   $'a', %eax
-	 * call  printch
-	 */
+#ifdef CONFIG_DEBUG_UART
+	call	debug_uart_init
+#endif
 
 	/* Get address of global_data */
 	mov	%fs:0, %edx

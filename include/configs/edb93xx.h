@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for Cirrus Logic EDB93xx boards
+ * U-Boot - Configuration file for Cirrus Logic EDB93xx boards
  */
 
 #ifndef __CONFIG_H
@@ -25,7 +25,6 @@
 #error "no board defined"
 #endif
 
-#define CONFIG_SYS_GENERIC_BOARD
 
 /* Initial environment and monitor configuration options. */
 #define CONFIG_BOOTDELAY		2

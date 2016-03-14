@@ -59,7 +59,6 @@
 /*-----------------------------------------------------------------------
  * Serial Configuration
  */
-#define CONFIG_SYS_NS16550
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_SYS_BAUDRATE_TABLE	{300, 600, 1200, 2400, 4800, \
 					 9600, 19200, 38400, 115200}
@@ -101,8 +100,8 @@
  * Command line configuration.
  */
 #define CONFIG_CMD_DATE
+#define CONFIG_CMD_FS_GENERIC
 #define CONFIG_CMD_FPGA_LOADMK
-#define CONFIG_CMD_GPIO
 #define CONFIG_CMD_IO
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_PCI
@@ -115,7 +114,6 @@
 #define CONFIG_CMD_EXT2
 
 #define CONFIG_CMD_ZBOOT
-#define CONFIG_CMD_ELF
 
 #define CONFIG_BOOTARGS		\
 	"root=/dev/sdb3 init=/sbin/init rootwait ro"
@@ -147,18 +145,13 @@
 #define CONFIG_VIDEO
 #define CONFIG_VIDEO_SW_CURSOR
 #define VIDEO_FB_16BPP_WORD_SWAP
-#define CONFIG_I8042_KBD
+#define CONFIG_VGA_AS_SINGLE_DEVICE
 #define CONFIG_CFB_CONSOLE
 #define CONFIG_CONSOLE_SCROLL_LINES 5
 
 /*-----------------------------------------------------------------------
  * CPU Features
  */
-
-#define CONFIG_SYS_X86_TSC_TIMER
-#define CONFIG_SYS_PCAT_INTERRUPTS
-#define CONFIG_SYS_PCAT_TIMER
-#define CONFIG_SYS_NUM_IRQS			16
 
 #define CONFIG_SYS_STACK_SIZE			(32 * 1024)
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
@@ -170,10 +163,6 @@
 /*-----------------------------------------------------------------------
  * FLASH configuration
  */
-#define CONFIG_ICH_SPI
-#define CONFIG_SPI_FLASH_MACRONIX
-#define CONFIG_SPI_FLASH_WINBOND
-#define CONFIG_SPI_FLASH_GIGADEVICE
 #define CONFIG_SYS_NO_FLASH
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_SF_TEST
@@ -217,9 +206,10 @@
 
 /* Default environment */
 #define CONFIG_ROOTPATH		"/opt/nfsroot"
-#define CONFIG_HOSTNAME		"x86"
+#define CONFIG_HOSTNAME		x86
 #define CONFIG_BOOTFILE		"bzImage"
 #define CONFIG_LOADADDR		0x1000000
+#define CONFIG_RAMDISK_ADDR		0x4000000
 
 #define CONFIG_EXTRA_ENV_SETTINGS			\
 	CONFIG_STD_DEVICES_SETTINGS			\
@@ -227,7 +217,7 @@
 	"netdev=eth0\0"					\
 	"consoledev=ttyS0\0"				\
 	"othbootargs=acpi=off\0"			\
-	"ramdiskaddr=0x2000000\0"			\
+	"ramdiskaddr=0x4000000\0"			\
 	"ramdiskfile=initramfs.gz\0"
 
 #define CONFIG_RAMBOOTCOMMAND				\
@@ -245,5 +235,7 @@
 	"console=$consoledev,$baudrate $othbootargs;"	\
 	"tftpboot $loadaddr $bootfile;"			\
 	"zboot $loadaddr"
+
+#define CONFIG_BOOTDELAY	2
 
 #endif	/* __CONFIG_H */

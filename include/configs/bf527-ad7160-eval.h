@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for BF527 AD7160-EVAL board
+ * U-Boot - Configuration file for BF527 AD7160-EVAL board
  */
 
 #ifndef __CONFIG_BF527_AD7160_EVAL_H__
@@ -89,7 +89,6 @@
 #define CONFIG_BFIN_SPI
 #define CONFIG_ENV_SPI_MAX_HZ	30000000
 #define CONFIG_SF_DEFAULT_SPEED	30000000
-#define CONFIG_SPI_FLASH_STMICRO
 
 
 /*

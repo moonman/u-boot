@@ -4,6 +4,8 @@ source "drivers/core/Kconfig"
 
 # types of drivers sorted in alphabetical order
 
+source "drivers/adc/Kconfig"
+
 source "drivers/block/Kconfig"
 
 source "drivers/clk/Kconfig"
@@ -44,7 +46,11 @@ source "drivers/pinctrl/Kconfig"
 
 source "drivers/power/Kconfig"
 
+source "drivers/pwm/Kconfig"
+
 source "drivers/ram/Kconfig"
+
+source "drivers/remoteproc/Kconfig"
 
 source "drivers/rtc/Kconfig"
 
@@ -55,6 +61,8 @@ source "drivers/sound/Kconfig"
 source "drivers/spi/Kconfig"
 
 source "drivers/thermal/Kconfig"
+
+source "drivers/timer/Kconfig"
 
 source "drivers/tpm/Kconfig"
 

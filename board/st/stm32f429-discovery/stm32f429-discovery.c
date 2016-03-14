@@ -6,7 +6,7 @@
  * Pavel Boldin, Emcraft Systems, paboldin@emcraft.com
  *
  * (C) Copyright 2015
- * Kamil Lulko, <rev13@wp.pl>
+ * Kamil Lulko, <kamil.lulko@gmail.com>
  *
  * SPDX-License-Identifier:	GPL-2.0+
  */
@@ -17,6 +17,10 @@
 #include <asm/arch/stm32.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/fmc.h>
+#include <dm/platdata.h>
+#include <dm/platform_data/serial_stm32.h>
+#include <asm/arch/stm32_periph.h>
+#include <asm/arch/stm32_defs.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -46,6 +50,7 @@ int uart_setup_gpio(void)
 	int i;
 	int rv = 0;
 
+	clock_setup(GPIO_A_CLOCK_CFG);
 	for (i = 0; i < ARRAY_SIZE(usart_gpio); i++) {
 		rv = stm32_gpio_config(&usart_gpio[i], &gpio_ctl_usart);
 		if (rv)
@@ -110,6 +115,13 @@ static int fmc_setup_gpio(void)
 {
 	int rv = 0;
 	int i;
+
+	clock_setup(GPIO_B_CLOCK_CFG);
+	clock_setup(GPIO_C_CLOCK_CFG);
+	clock_setup(GPIO_D_CLOCK_CFG);
+	clock_setup(GPIO_E_CLOCK_CFG);
+	clock_setup(GPIO_F_CLOCK_CFG);
+	clock_setup(GPIO_G_CLOCK_CFG);
 
 	for (i = 0; i < ARRAY_SIZE(ext_ram_fmc_gpio); i++) {
 		rv = stm32_gpio_config(&ext_ram_fmc_gpio[i],
@@ -263,6 +275,15 @@ int dram_init(void)
 	return rv;
 }
 
+static const struct stm32_serial_platdata serial_platdata = {
+	.base = (struct stm32_usart *)STM32_USART1_BASE,
+};
+
+U_BOOT_DEVICE(stm32_serials) = {
+	.name = "serial_stm32",
+	.platdata = &serial_platdata,
+};
+
 u32 get_board_rev(void)
 {
 	return 0;
@@ -275,6 +296,7 @@ int board_early_init_f(void)
 	res = uart_setup_gpio();
 	if (res)
 		return res;
+	clock_setup(USART1_CLOCK_CFG);
 
 	return 0;
 }

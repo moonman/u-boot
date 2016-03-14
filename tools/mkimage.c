@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 			case 'a':
 				if (--argc <= 0)
 					usage ();
-				params.addr = strtoul (*++argv, &ptr, 16);
+				params.addr = strtoull(*++argv, &ptr, 16);
 				if (*ptr) {
 					fprintf (stderr,
 						"%s: invalid load address %s\n",
@@ -146,7 +146,7 @@ int main(int argc, char **argv)
 			case 'e':
 				if (--argc <= 0)
 					usage ();
-				params.ep = strtoul (*++argv, &ptr, 16);
+				params.ep = strtoull(*++argv, &ptr, 16);
 				if (*ptr) {
 					fprintf (stderr,
 						"%s: invalid entry point %s\n",
@@ -311,21 +311,25 @@ NXTARG:		;
 		exit (retval);
 	}
 
-	dfd = open(params.datafile, O_RDONLY | O_BINARY);
-	if (dfd < 0) {
-		fprintf(stderr, "%s: Can't open %s: %s\n",
-			params.cmdname, params.datafile, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+	if ((params.type != IH_TYPE_MULTI) && (params.type != IH_TYPE_SCRIPT)) {
+		dfd = open(params.datafile, O_RDONLY | O_BINARY);
+		if (dfd < 0) {
+			fprintf(stderr, "%s: Can't open %s: %s\n",
+				params.cmdname, params.datafile,
+				strerror(errno));
+			exit(EXIT_FAILURE);
+		}
 
-	if (fstat(dfd, &sbuf) < 0) {
-		fprintf(stderr, "%s: Can't stat %s: %s\n",
-			params.cmdname, params.datafile, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+		if (fstat(dfd, &sbuf) < 0) {
+			fprintf(stderr, "%s: Can't stat %s: %s\n",
+				params.cmdname, params.datafile,
+				strerror(errno));
+			exit(EXIT_FAILURE);
+		}
 
-	params.file_size = sbuf.st_size + tparams->header_size;
-	close(dfd);
+		params.file_size = sbuf.st_size + tparams->header_size;
+		close(dfd);
+	}
 
 	/*
 	 * In case there an header with a variable

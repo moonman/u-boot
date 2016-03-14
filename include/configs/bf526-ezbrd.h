@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for BF526 EZBrd board
+ * U-Boot - Configuration file for BF526 EZBrd board
  */
 
 #ifndef __CONFIG_BF526_EZBRD_H__
@@ -103,7 +103,6 @@
 #define CONFIG_BFIN_SPI
 #define CONFIG_ENV_SPI_MAX_HZ	30000000
 #define CONFIG_SF_DEFAULT_SPEED	30000000
-#define CONFIG_SPI_FLASH_SST
 
 
 /*

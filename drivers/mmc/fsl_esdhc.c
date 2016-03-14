@@ -105,11 +105,9 @@ static uint esdhc_xfertyp(struct mmc_cmd *cmd, struct mmc_data *data)
 	else if (cmd->resp_type & MMC_RSP_PRESENT)
 		xfertyp |= XFERTYP_RSPTYP_48;
 
-#if defined(CONFIG_MX53) || defined(CONFIG_PPC_T4240) || \
-	defined(CONFIG_LS102XA) || defined(CONFIG_LS2085A)
 	if (cmd->cmdidx == MMC_CMD_STOP_TRANSMISSION)
 		xfertyp |= XFERTYP_CMDTYP_ABORT;
-#endif
+
 	return XFERTYP_CMD(cmd->cmdidx) | xfertyp;
 }
 
@@ -184,7 +182,7 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 	int timeout;
 	struct fsl_esdhc_cfg *cfg = mmc->priv;
 	struct fsl_esdhc *regs = (struct fsl_esdhc *)cfg->esdhc_base;
-#ifdef CONFIG_LS2085A
+#ifdef CONFIG_FSL_LAYERSCAPE
 	dma_addr_t addr;
 #endif
 	uint wml_value;
@@ -197,7 +195,7 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 
 		esdhc_clrsetbits32(&regs->wml, WML_RD_WML_MASK, wml_value);
 #ifndef CONFIG_SYS_FSL_ESDHC_USE_PIO
-#ifdef CONFIG_LS2085A
+#ifdef CONFIG_FSL_LAYERSCAPE
 		addr = virt_to_phys((void *)(data->dest));
 		if (upper_32_bits(addr))
 			printf("Error found for upper 32 bits\n");
@@ -223,7 +221,7 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 		esdhc_clrsetbits32(&regs->wml, WML_WR_WML_MASK,
 					wml_value << 16);
 #ifndef CONFIG_SYS_FSL_ESDHC_USE_PIO
-#ifdef CONFIG_LS2085A
+#ifdef CONFIG_FSL_LAYERSCAPE
 		addr = virt_to_phys((void *)(data->src));
 		if (upper_32_bits(addr))
 			printf("Error found for upper 32 bits\n");
@@ -251,8 +249,15 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 	 * Rounding up to next power of 2
 	 * => timeout + 13 = log2(mmc->clock/4) + 1
 	 * => timeout + 13 = fls(mmc->clock/4)
+	 *
+	 * However, the MMC spec "It is strongly recommended for hosts to
+	 * implement more than 500ms timeout value even if the card
+	 * indicates the 250ms maximum busy length."  Even the previous
+	 * value of 300ms is known to be insufficient for some cards.
+	 * So, we use
+	 * => timeout + 13 = fls(mmc->clock/2)
 	 */
-	timeout = fls(mmc->clock/4);
+	timeout = fls(mmc->clock/2);
 	timeout -= 13;
 
 	if (timeout > 14)
@@ -277,7 +282,7 @@ static int esdhc_setup_data(struct mmc *mmc, struct mmc_data *data)
 static void check_and_invalidate_dcache_range
 	(struct mmc_cmd *cmd,
 	 struct mmc_data *data) {
-#ifdef CONFIG_LS2085A
+#ifdef CONFIG_FSL_LAYERSCAPE
 	unsigned start = 0;
 #else
 	unsigned start = (unsigned)data->dest ;
@@ -285,7 +290,7 @@ static void check_and_invalidate_dcache_range
 	unsigned size = roundup(ARCH_DMA_MINALIGN,
 				data->blocks*data->blocksize);
 	unsigned end = start+size ;
-#ifdef CONFIG_LS2085A
+#ifdef CONFIG_FSL_LAYERSCAPE
 	dma_addr_t addr;
 
 	addr = virt_to_phys((void *)(data->dest));
@@ -501,15 +506,22 @@ static void set_sysctl(struct mmc *mmc, uint clock)
 
 	clk = (pre_div << 8) | (div << 4);
 
+#ifdef CONFIG_FSL_USDHC
+	esdhc_setbits32(&regs->sysctl, SYSCTL_RSTA);
+#else
 	esdhc_clrbits32(&regs->sysctl, SYSCTL_CKEN);
+#endif
 
 	esdhc_clrsetbits32(&regs->sysctl, SYSCTL_CLOCK_MASK, clk);
 
 	udelay(10000);
 
-	clk = SYSCTL_PEREN | SYSCTL_CKEN;
+#ifdef CONFIG_FSL_USDHC
+	esdhc_clrbits32(&regs->sysctl, SYSCTL_RSTA);
+#else
+	esdhc_setbits32(&regs->sysctl, SYSCTL_PEREN | SYSCTL_CKEN);
+#endif
 
-	esdhc_setbits32(&regs->sysctl, clk);
 }
 
 #ifdef CONFIG_FSL_ESDHC_USE_PERIPHERAL_CLK
@@ -584,7 +596,9 @@ static int esdhc_init(struct mmc *mmc)
 	esdhc_write32(&regs->scr, 0x00000040);
 #endif
 
+#ifndef CONFIG_FSL_USDHC
 	esdhc_setbits32(&regs->sysctl, SYSCTL_HCKEN | SYSCTL_IPGEN);
+#endif
 
 	/* Set the initial clock speed */
 	mmc_set_clock(mmc, 400000);
@@ -656,8 +670,10 @@ int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
 	/* First reset the eSDHC controller */
 	esdhc_reset(regs);
 
+#ifndef CONFIG_FSL_USDHC
 	esdhc_setbits32(&regs->sysctl, SYSCTL_PEREN | SYSCTL_HCKEN
 				| SYSCTL_IPGEN | SYSCTL_CKEN);
+#endif
 
 	writel(SDHCI_IRQ_EN_BITS, &regs->irqstaten);
 	memset(&cfg->cfg, 0, sizeof(cfg->cfg));
@@ -747,8 +763,14 @@ void mmc_adapter_card_type_ident(void)
 
 	switch (card_id) {
 	case QIXIS_ESDHC_ADAPTER_TYPE_EMMC45:
+		value = QIXIS_READ(brdcfg[5]);
+		value |= (QIXIS_DAT4 | QIXIS_DAT5_6_7);
+		QIXIS_WRITE(brdcfg[5], value);
 		break;
 	case QIXIS_ESDHC_ADAPTER_TYPE_SDMMC_LEGACY:
+		value = QIXIS_READ(pwr_ctl[1]);
+		value |= QIXIS_EVDD_BY_SDHC_VS;
+		QIXIS_WRITE(pwr_ctl[1], value);
 		break;
 	case QIXIS_ESDHC_ADAPTER_TYPE_EMMC44:
 		value = QIXIS_READ(brdcfg[5]);

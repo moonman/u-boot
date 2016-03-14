@@ -25,6 +25,7 @@ struct atmel_sfr {
 	u32 sn0;		/* 0x4c */
 	u32 sn1;		/* 0x50 */
 	u32 aicredir;	/* 0x54 */
+	u32 l2cc_hramc;	/* 0x58 */
 };
 
 /* Bit field in DDRCFG */
@@ -32,7 +33,6 @@ struct atmel_sfr {
 #define ATMEL_SFR_DDRCFG_FDQSIEN	0x00020000
 
 /* Bit field in AICREDIR */
-#define ATMEL_SFR_AICREDIR_KEY		0x5F67B102
 #define ATMEL_SFR_AICREDIR_NSAIC	0x00000001
 
 #endif

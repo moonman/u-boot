@@ -12,7 +12,6 @@
 #define __T1024RDB_H
 
 /* High Level Configuration Options */
-#define CONFIG_SYS_GENERIC_BOARD
 #define CONFIG_DISPLAY_BOARDINFO
 #define CONFIG_BOOKE
 #define CONFIG_E500			/* BOOKE e500 family */
@@ -33,6 +32,8 @@
 
 #define CONFIG_FSL_LAW			/* Use common FSL init code */
 #define CONFIG_ENV_OVERWRITE
+
+#define CONFIG_FSL_CAAM			/* Enable SEC/CAAM */
 
 /* support deep sleep */
 #ifdef CONFIG_PPC_T1024
@@ -497,7 +498,6 @@ unsigned long get_board_ddr_clk(void);
 
 /* Serial Port */
 #define CONFIG_CONS_INDEX	1
-#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
 #define CONFIG_SYS_NS16550_CLK		(get_bus_freq(0)/2)
@@ -569,11 +569,8 @@ unsigned long get_board_ddr_clk(void);
 /*
  * eSPI - Enhanced SPI
  */
-#define CONFIG_FSL_ESPI
 #if defined(CONFIG_T1024RDB)
-#define CONFIG_SPI_FLASH_STMICRO
 #elif defined(CONFIG_T1023RDB)
-#define CONFIG_SPI_FLASH_SPANSION
 #endif
 #define CONFIG_CMD_SF
 #define CONFIG_SPI_FLASH_BAR
@@ -852,7 +849,6 @@ unsigned long get_board_ddr_clk(void);
 #define CONFIG_CMD_DATE
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_EEPROM
-#define CONFIG_CMD_ELF
 #define CONFIG_CMD_ERRATA
 #define CONFIG_CMD_GREPENV
 #define CONFIG_CMD_IRQ
@@ -954,8 +950,12 @@ unsigned long get_board_ddr_clk(void);
 
 #define CONFIG_BOOTCOMMAND	CONFIG_LINUX
 
-#ifdef CONFIG_SECURE_BOOT
-#include <asm/fsl_secure_boot.h>
+/* Hash command with SHA acceleration supported in hardware */
+#ifdef CONFIG_FSL_CAAM
+#define CONFIG_CMD_HASH
+#define CONFIG_SHA_HW_ACCEL
 #endif
+
+#include <asm/fsl_secure_boot.h>
 
 #endif	/* __T1024RDB_H */

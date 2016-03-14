@@ -44,8 +44,25 @@
 #ifndef CONFIG_SPL_BUILD
 /* Define the default GPT table for eMMC */
 #define PARTS_DEFAULT \
+	/* Linux partitions */ \
 	"uuid_disk=${uuid_gpt_disk};" \
-	"name=rootfs,start=2MiB,size=-,uuid=${uuid_gpt_rootfs}"
+	"name=rootfs,start=2MiB,size=-,uuid=${uuid_gpt_rootfs}\0" \
+	/* Android partitions */ \
+	"partitions_android=" \
+	"uuid_disk=${uuid_gpt_disk};" \
+	"name=xloader,start=128K,size=128K,uuid=${uuid_gpt_xloader};" \
+	"name=bootloader,size=384K,uuid=${uuid_gpt_bootloader};" \
+	"name=environment,size=128K,uuid=${uuid_gpt_environment};" \
+	"name=misc,size=128K,uuid=${uuid_gpt_misc};" \
+	"name=efs,start=1280K,size=16M,uuid=${uuid_gpt_efs};" \
+	"name=crypto,size=16K,uuid=${uuid_gpt_crypto};" \
+	"name=recovery,size=10M,uuid=${uuid_gpt_recovery};" \
+	"name=boot,size=10M,uuid=${uuid_gpt_boot};" \
+	"name=system,size=768M,uuid=${uuid_gpt_system};" \
+	"name=cache,size=256M,uuid=${uuid_gpt_cache};" \
+	"name=ipu1,size=1M,uuid=${uuid_gpt_ipu1};" \
+	"name=ipu2,size=1M,uuid=${uuid_gpt_ipu2};" \
+	"name=userdata,size=-,uuid=${uuid_gpt_userdata}"
 
 #define DFU_ALT_INFO_MMC \
 	"dfu_alt_info_mmc=" \
@@ -82,11 +99,24 @@
 	"fdt ram 0x80f80000 0x80000;" \
 	"ramdisk ram 0x81000000 0x4000000\0"
 
+#define DFU_ALT_INFO_QSPI \
+	"dfu_alt_info_qspi=" \
+	"MLO raw 0x0 0x010000;" \
+	"MLO.backup1 raw 0x010000 0x010000;" \
+	"MLO.backup2 raw 0x020000 0x010000;" \
+	"MLO.backup3 raw 0x030000 0x010000;" \
+	"u-boot.img raw 0x040000 0x0100000;" \
+	"u-boot-spl-os raw 0x140000 0x080000;" \
+	"u-boot-env raw 0x1C0000 0x010000;" \
+	"u-boot-env.backup raw 0x1D0000 0x010000;" \
+	"kernel raw 0x1E0000 0x800000\0"
+
 #define DFUARGS \
 	"dfu_bufsiz=0x10000\0" \
 	DFU_ALT_INFO_MMC \
 	DFU_ALT_INFO_EMMC \
-	DFU_ALT_INFO_RAM
+	DFU_ALT_INFO_RAM \
+	DFU_ALT_INFO_QSPI
 
 /* Fastboot */
 #define CONFIG_USB_FUNCTION_FASTBOOT
@@ -103,6 +133,7 @@
 /* Enhance our eMMC support / experience. */
 #define CONFIG_CMD_GPT
 #define CONFIG_EFI_PARTITION
+#define CONFIG_RANDOM_UUID
 #define CONFIG_HSMMC2_8BIT
 
 /* CPSW Ethernet */
@@ -122,14 +153,17 @@
 
 /* SPI */
 #undef	CONFIG_OMAP3_SPI
-#define CONFIG_TI_QSPI
-#define CONFIG_SPI_FLASH_SPANSION
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_SPI
 #define CONFIG_TI_SPI_MMAP
-#define CONFIG_SF_DEFAULT_SPEED                48000000
-#define CONFIG_DEFAULT_SPI_MODE                SPI_MODE_3
+#define CONFIG_SF_DEFAULT_SPEED                64000000
+#define CONFIG_SF_DEFAULT_MODE                 SPI_MODE_0
 #define CONFIG_QSPI_QUAD_SUPPORT
+
+#ifdef CONFIG_SPL_BUILD
+#undef CONFIG_DM_SPI
+#undef CONFIG_DM_SPI_FLASH
+#endif
 
 /*
  * Default to using SPI for environment, etc.
@@ -207,6 +241,7 @@
 
 #define CONFIG_DFU_MMC
 #define CONFIG_DFU_RAM
+#define CONFIG_DFU_SF
 
 /* SATA */
 #define CONFIG_BOARD_LATE_INIT

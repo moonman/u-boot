@@ -22,8 +22,6 @@
 #define CONFIG_MACH_TYPE		MACH_TYPE_TRIMSLICE
 
 /* SPI */
-#define CONFIG_TEGRA20_SFLASH
-#define CONFIG_SPI_FLASH_WINBOND
 #define CONFIG_SF_DEFAULT_MODE		SPI_MODE_0
 #define CONFIG_CMD_SPI
 #define CONFIG_CMD_SF
@@ -46,7 +44,6 @@
 #define CONFIG_ENV_OFFSET		(512 * 1024)
 
 /* USB Host support */
-#define CONFIG_USB_MAX_CONTROLLER_COUNT 3
 #define CONFIG_USB_EHCI
 #define CONFIG_USB_EHCI_TEGRA
 #define CONFIG_USB_STORAGE
@@ -58,10 +55,8 @@
 
 /* PCI host support */
 #define CONFIG_PCI
-#define CONFIG_PCI_TEGRA
 #define CONFIG_PCI_PNP
 #define CONFIG_CMD_PCI
-#define CONFIG_CMD_PCI_ENUM
 
 /* PCI networking support */
 #define CONFIG_RTL8169

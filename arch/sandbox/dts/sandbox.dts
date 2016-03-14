@@ -117,6 +117,7 @@
 	};
 
 	lcd {
+		u-boot,dm-pre-reloc;
 		compatible = "sandbox,lcd-sdl";
 		xres = <1366>;
 		yres = <768>;
@@ -175,6 +176,11 @@
 		compatible = "demo-shape";
 		colour = "blue";
 		sides = <4>;
+	};
+
+	timer {
+		compatible = "sandbox,timer";
+		clock-frequency = <1000000>;
 	};
 
 	tpm {

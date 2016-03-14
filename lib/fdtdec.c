@@ -5,6 +5,7 @@
 
 #ifndef USE_HOSTCC
 #include <common.h>
+#include <dm.h>
 #include <errno.h>
 #include <serial.h>
 #include <libfdt.h>
@@ -24,10 +25,8 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(UNKNOWN, "<none>"),
 	COMPAT(NVIDIA_TEGRA20_EMC, "nvidia,tegra20-emc"),
 	COMPAT(NVIDIA_TEGRA20_EMC_TABLE, "nvidia,tegra20-emc-table"),
-	COMPAT(NVIDIA_TEGRA20_KBC, "nvidia,tegra20-kbc"),
 	COMPAT(NVIDIA_TEGRA20_NAND, "nvidia,tegra20-nand"),
 	COMPAT(NVIDIA_TEGRA20_PWM, "nvidia,tegra20-pwm"),
-	COMPAT(NVIDIA_TEGRA124_DC, "nvidia,tegra124-dc"),
 	COMPAT(NVIDIA_TEGRA124_SOR, "nvidia,tegra124-sor"),
 	COMPAT(NVIDIA_TEGRA124_PMC, "nvidia,tegra124-pmc"),
 	COMPAT(NVIDIA_TEGRA20_DC, "nvidia,tegra20-dc"),
@@ -35,9 +34,6 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(NVIDIA_TEGRA124_SDMMC, "nvidia,tegra124-sdhci"),
 	COMPAT(NVIDIA_TEGRA30_SDMMC, "nvidia,tegra30-sdhci"),
 	COMPAT(NVIDIA_TEGRA20_SDMMC, "nvidia,tegra20-sdhci"),
-	COMPAT(NVIDIA_TEGRA124_PCIE, "nvidia,tegra124-pcie"),
-	COMPAT(NVIDIA_TEGRA30_PCIE, "nvidia,tegra30-pcie"),
-	COMPAT(NVIDIA_TEGRA20_PCIE, "nvidia,tegra20-pcie"),
 	COMPAT(NVIDIA_TEGRA124_XUSB_PADCTL, "nvidia,tegra124-xusb-padctl"),
 	COMPAT(NVIDIA_TEGRA210_XUSB_PADCTL, "nvidia,tegra210-xusb-padctl"),
 	COMPAT(SMSC_LAN9215, "smsc,lan9215"),
@@ -59,7 +55,6 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(GENERIC_SPI_FLASH, "spi-flash"),
 	COMPAT(MAXIM_98095_CODEC, "maxim,max98095-codec"),
 	COMPAT(SAMSUNG_EXYNOS5_I2C, "samsung,exynos5-hsi2c"),
-	COMPAT(SANDBOX_LCD_SDL, "sandbox,lcd-sdl"),
 	COMPAT(SAMSUNG_EXYNOS_SYSMMU, "samsung,sysmmu-v3.3"),
 	COMPAT(INTEL_MICROCODE, "intel,microcode"),
 	COMPAT(MEMORY_SPD, "memory-spd"),
@@ -72,11 +67,12 @@ static const char * const compat_names[COMPAT_COUNT] = {
 	COMPAT(INTEL_X86_PINCTRL, "intel,x86-pinctrl"),
 	COMPAT(SOCIONEXT_XHCI, "socionext,uniphier-xhci"),
 	COMPAT(COMPAT_INTEL_PCH, "intel,bd82x6x"),
-	COMPAT(COMPAT_INTEL_IRQ_ROUTER, "intel,irq-router"),
 	COMPAT(ALTERA_SOCFPGA_DWMAC, "altr,socfpga-stmmac"),
 	COMPAT(ALTERA_SOCFPGA_DWMMC, "altr,socfpga-dw-mshc"),
+	COMPAT(ALTERA_SOCFPGA_DWC2USB, "snps,dwc2"),
 	COMPAT(COMPAT_INTEL_BAYTRAIL_FSP, "intel,baytrail-fsp"),
 	COMPAT(COMPAT_INTEL_BAYTRAIL_FSP_MDP, "intel,baytrail-fsp-mdp"),
+	COMPAT(COMPAT_INTEL_IVYBRIDGE_FSP, "intel,ivybridge-fsp"),
 };
 
 const char *fdtdec_get_compatible(enum fdt_compat_id id)
@@ -193,7 +189,7 @@ fdt_addr_t fdtdec_get_addr(const void *blob, int node,
 	return fdtdec_get_addr_size(blob, node, prop_name, NULL);
 }
 
-#ifdef CONFIG_PCI
+#if defined(CONFIG_PCI) && defined(CONFIG_DM_PCI)
 int fdtdec_get_pci_addr(const void *blob, int node, enum fdt_pci_space type,
 		const char *prop_name, struct fdt_pci_addr *addr)
 {
@@ -219,13 +215,13 @@ int fdtdec_get_pci_addr(const void *blob, int node, enum fdt_pci_space type,
 
 		for (i = 0; i < num; i++) {
 			debug("pci address #%d: %08lx %08lx %08lx\n", i,
-			      (ulong)fdt_addr_to_cpu(cell[0]),
-			      (ulong)fdt_addr_to_cpu(cell[1]),
-			      (ulong)fdt_addr_to_cpu(cell[2]));
-			if ((fdt_addr_to_cpu(*cell) & type) == type) {
-				addr->phys_hi = fdt_addr_to_cpu(cell[0]);
-				addr->phys_mid = fdt_addr_to_cpu(cell[1]);
-				addr->phys_lo = fdt_addr_to_cpu(cell[2]);
+			      (ulong)fdt32_to_cpu(cell[0]),
+			      (ulong)fdt32_to_cpu(cell[1]),
+			      (ulong)fdt32_to_cpu(cell[2]));
+			if ((fdt32_to_cpu(*cell) & type) == type) {
+				addr->phys_hi = fdt32_to_cpu(cell[0]);
+				addr->phys_mid = fdt32_to_cpu(cell[1]);
+				addr->phys_lo = fdt32_to_cpu(cell[1]);
 				break;
 			} else {
 				cell += (FDT_PCI_ADDR_CELLS +
@@ -286,58 +282,10 @@ int fdtdec_get_pci_vendev(const void *blob, int node, u16 *vendor, u16 *device)
 	return -ENOENT;
 }
 
-int fdtdec_get_pci_bdf(const void *blob, int node,
-		struct fdt_pci_addr *addr, pci_dev_t *bdf)
+int fdtdec_get_pci_bar32(struct udevice *dev, struct fdt_pci_addr *addr,
+			 u32 *bar)
 {
-	u16 dt_vendor, dt_device, vendor, device;
-	int ret;
-
-	/* get vendor id & device id from the compatible string */
-	ret = fdtdec_get_pci_vendev(blob, node, &dt_vendor, &dt_device);
-	if (ret)
-		return ret;
-
-	/* extract the bdf from fdt_pci_addr */
-	*bdf = addr->phys_hi & 0xffff00;
-
-	/* read vendor id & device id based on bdf */
-	pci_read_config_word(*bdf, PCI_VENDOR_ID, &vendor);
-	pci_read_config_word(*bdf, PCI_DEVICE_ID, &device);
-
-	/*
-	 * Note there are two places in the device tree to fully describe
-	 * a pci device: one is via compatible string with a format of
-	 * "pciVVVV,DDDD" and the other one is the bdf numbers encoded in
-	 * the device node's reg address property. We read the vendor id
-	 * and device id based on bdf and compare the values with the
-	 * "VVVV,DDDD". If they are the same, then we are good to use bdf
-	 * to read device's bar. But if they are different, we have to rely
-	 * on the vendor id and device id extracted from the compatible
-	 * string and locate the real bdf by pci_find_device(). This is
-	 * because normally we may only know device's device number and
-	 * function number when writing device tree. The bus number is
-	 * dynamically assigned during the pci enumeration process.
-	 */
-	if ((dt_vendor != vendor) || (dt_device != device)) {
-		*bdf = pci_find_device(dt_vendor, dt_device, 0);
-		if (*bdf == -1)
-			return -ENODEV;
-	}
-
-	return 0;
-}
-
-int fdtdec_get_pci_bar32(const void *blob, int node,
-		struct fdt_pci_addr *addr, u32 *bar)
-{
-	pci_dev_t bdf;
 	int barnum;
-	int ret;
-
-	/* get pci devices's bdf */
-	ret = fdtdec_get_pci_bdf(blob, node, addr, &bdf);
-	if (ret)
-		return ret;
 
 	/* extract the bar number from fdt_pci_addr */
 	barnum = addr->phys_hi & 0xff;
@@ -345,7 +293,7 @@ int fdtdec_get_pci_bar32(const void *blob, int node,
 		return -EINVAL;
 
 	barnum = (barnum - PCI_BASE_ADDRESS_0) / 4;
-	*bar = pci_read_bar32(pci_bus_to_hose(PCI_BUS(bdf)), bdf, barnum);
+	*bar = dm_pci_read_bar32(dev, barnum);
 
 	return 0;
 }
@@ -601,16 +549,21 @@ int fdtdec_get_alias_seq(const void *blob, const char *base, int offset,
 	return -ENOENT;
 }
 
+const char *fdtdec_get_chosen_prop(const void *blob, const char *name)
+{
+	int chosen_node;
+
+	if (!blob)
+		return NULL;
+	chosen_node = fdt_path_offset(blob, "/chosen");
+	return fdt_getprop(blob, chosen_node, name, NULL);
+}
+
 int fdtdec_get_chosen_node(const void *blob, const char *name)
 {
 	const char *prop;
-	int chosen_node;
-	int len;
 
-	if (!blob)
-		return -FDT_ERR_NOTFOUND;
-	chosen_node = fdt_path_offset(blob, "/chosen");
-	prop = fdt_getprop(blob, chosen_node, name, &len);
+	prop = fdtdec_get_chosen_prop(blob, name);
 	if (!prop)
 		return -FDT_ERR_NOTFOUND;
 	return fdt_path_offset(blob, prop);
@@ -875,6 +828,17 @@ int fdtdec_parse_phandle_with_args(const void *blob, int src_node,
 	rc = index < 0 ? cur_index : -ENOENT;
  err:
 	return rc;
+}
+
+int fdtdec_get_child_count(const void *blob, int node)
+{
+	int subnode;
+	int num = 0;
+
+	fdt_for_each_subnode(blob, subnode, node)
+		num++;
+
+	return num;
 }
 
 int fdtdec_get_byte_array(const void *blob, int node, const char *prop_name,
@@ -1217,8 +1181,11 @@ int fdtdec_setup(void)
 	gd->fdt_blob = __dtb_dt_begin;
 # elif defined CONFIG_OF_SEPARATE
 #  ifdef CONFIG_SPL_BUILD
-	/* FDT is at end of BSS */
-	gd->fdt_blob = (ulong *)&__bss_end;
+	/* FDT is at end of BSS unless it is in a different memory region */
+	if (IS_ENABLED(CONFIG_SPL_SEPARATE_BSS))
+		gd->fdt_blob = (ulong *)&_image_binary_end;
+	else
+		gd->fdt_blob = (ulong *)&__bss_end;
 #  else
 	/* FDT is at end of image */
 	gd->fdt_blob = (ulong *)&_end;

@@ -1,5 +1,5 @@
 /*
- * LG Optimus Black (P970) codename sniper board
+ * LG Optimus Black codename sniper board
  *
  * Copyright (C) 2015 Paul Kocialkowski <contact@paulk.fr>
  *
@@ -24,7 +24,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 const omap3_sysinfo sysinfo = {
 	.mtype = DDR_STACKED,
-	.board_string = "Sniper",
+	.board_string = "sniper",
 	.nand_string = "MMC"
 };
 
@@ -35,7 +35,7 @@ static const struct ns16550_platdata serial_omap_platdata = {
 };
 
 U_BOOT_DEVICE(sniper_serial) = {
-	.name = "serial_omap",
+	.name = "ns16550_serial",
 	.platdata = &serial_omap_platdata
 };
 
@@ -58,6 +58,11 @@ static struct musb_hdrc_platform_data musb_platform_data = {
 	.board_data = &musb_board_data,
 };
 
+void set_muxconf_regs(void)
+{
+	MUX_SNIPER();
+}
+
 #ifdef CONFIG_SPL_BUILD
 void get_board_mem_timings(struct board_sdrc_timings *timings)
 {
@@ -68,12 +73,6 @@ void get_board_mem_timings(struct board_sdrc_timings *timings)
 	timings->mr = MICRON_V_MR_165;
 }
 #endif
-
-u32 get_board_rev(void)
-{
-	/* Sold devices are expected to be at least revision F. */
-	return 6;
-}
 
 int board_init(void)
 {
@@ -92,9 +91,7 @@ int board_init(void)
 int misc_init_r(void)
 {
 	unsigned char keypad_matrix[64] = { 0 };
-	char serial_string[17] = { 0 };
 	char reboot_mode[2] = { 0 };
-	u32 dieid[4] = { 0 };
 	unsigned char keys[3];
 	unsigned char data = 0;
 
@@ -140,14 +137,7 @@ int misc_init_r(void)
 
 	/* Serial number */
 
-	get_dieid((u32 *)&dieid);
-
-	if (!getenv("serial#")) {
-		snprintf(serial_string, sizeof(serial_string),
-			"%08x%08x", dieid[0], dieid[3]);
-
-		setenv("serial#", serial_string);
-	}
+	omap_die_id_serial();
 
 	/* MUSB */
 
@@ -156,22 +146,15 @@ int misc_init_r(void)
 	return 0;
 }
 
+u32 get_board_rev(void)
+{
+	/* Sold devices are expected to be at least revision F. */
+	return 6;
+}
+
 void get_board_serial(struct tag_serialnr *serialnr)
 {
-	char *serial_string;
-	unsigned long long serial;
-
-	serial_string = getenv("serial#");
-
-	if (serial_string) {
-		serial = simple_strtoull(serial_string, NULL, 16);
-
-		serialnr->high = (unsigned int) (serial >> 32);
-		serialnr->low = (unsigned int) (serial & 0xffffffff);
-	} else {
-		serialnr->high = 0;
-		serialnr->low = 0;
-	}
+	omap_die_id_get_board_serial(serialnr);
 }
 
 void reset_misc(void)
@@ -182,11 +165,6 @@ void reset_misc(void)
 int fb_set_reboot_flag(void)
 {
 	return omap_reboot_mode_store('b');
-}
-
-void set_muxconf_regs(void)
-{
-	MUX_SNIPER();
 }
 
 #ifndef CONFIG_SPL_BUILD

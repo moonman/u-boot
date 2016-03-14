@@ -8,7 +8,6 @@
 #include <fdtdec.h>
 #include <fpga.h>
 #include <mmc.h>
-#include <netdev.h>
 #include <zynqpl.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
@@ -94,67 +93,13 @@ int board_late_init(void)
 #ifdef CONFIG_DISPLAY_BOARDINFO
 int checkboard(void)
 {
-	puts("Board:\tXilinx Zynq\n");
+	puts("Board: Xilinx Zynq\n");
 	return 0;
-}
-#endif
-
-int board_eth_init(bd_t *bis)
-{
-	u32 ret = 0;
-
-#ifdef CONFIG_XILINX_AXIEMAC
-	ret |= xilinx_axiemac_initialize(bis, XILINX_AXIEMAC_BASEADDR,
-						XILINX_AXIDMA_BASEADDR);
-#endif
-#ifdef CONFIG_XILINX_EMACLITE
-	u32 txpp = 0;
-	u32 rxpp = 0;
-# ifdef CONFIG_XILINX_EMACLITE_TX_PING_PONG
-	txpp = 1;
-# endif
-# ifdef CONFIG_XILINX_EMACLITE_RX_PING_PONG
-	rxpp = 1;
-# endif
-	ret |= xilinx_emaclite_initialize(bis, XILINX_EMACLITE_BASEADDR,
-			txpp, rxpp);
-#endif
-
-#if defined(CONFIG_ZYNQ_GEM)
-# if defined(CONFIG_ZYNQ_GEM0)
-	ret |= zynq_gem_initialize(bis, ZYNQ_GEM_BASEADDR0,
-				   CONFIG_ZYNQ_GEM_PHY_ADDR0,
-				   CONFIG_ZYNQ_GEM_EMIO0);
-# endif
-# if defined(CONFIG_ZYNQ_GEM1)
-	ret |= zynq_gem_initialize(bis, ZYNQ_GEM_BASEADDR1,
-				   CONFIG_ZYNQ_GEM_PHY_ADDR1,
-				   CONFIG_ZYNQ_GEM_EMIO1);
-# endif
-#endif
-	return ret;
-}
-
-#ifdef CONFIG_CMD_MMC
-int board_mmc_init(bd_t *bd)
-{
-	int ret = 0;
-
-#if defined(CONFIG_ZYNQ_SDHCI)
-# if defined(CONFIG_ZYNQ_SDHCI0)
-	ret = zynq_sdhci_init(ZYNQ_SDHCI_BASEADDR0);
-# endif
-# if defined(CONFIG_ZYNQ_SDHCI1)
-	ret |= zynq_sdhci_init(ZYNQ_SDHCI_BASEADDR1);
-# endif
-#endif
-	return ret;
 }
 #endif
 
 int dram_init(void)
 {
-#if CONFIG_IS_ENABLED(OF_CONTROL)
 	int node;
 	fdt_addr_t addr;
 	fdt_size_t size;
@@ -172,9 +117,6 @@ int dram_init(void)
 		return -1;
 	}
 	gd->ram_size = size;
-#else
-	gd->ram_size = CONFIG_SYS_SDRAM_SIZE;
-#endif
 	zynq_ddrc_init();
 
 	return 0;

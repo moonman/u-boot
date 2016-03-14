@@ -8,7 +8,6 @@
 #include <dm.h>
 #include <errno.h>
 #include <fdtdec.h>
-#include <mapmem.h>
 #include <ns16550.h>
 #include <serial.h>
 #include <watchdog.h>
@@ -57,6 +56,10 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #ifdef CONFIG_DM_SERIAL
 
+#ifndef CONFIG_SYS_NS16550_CLK
+#define CONFIG_SYS_NS16550_CLK  0
+#endif
+
 static inline void serial_out_shift(void *addr, int shift, int value)
 {
 #ifdef CONFIG_SYS_NS16550_PORT_MAPPED
@@ -97,7 +100,7 @@ static void ns16550_writeb(NS16550_t port, int offset, int value)
 	unsigned char *addr;
 
 	offset *= 1 << plat->reg_shift;
-	addr = map_sysmem(plat->base, 0) + offset;
+	addr = map_physmem(plat->base, 0, MAP_NOCACHE) + offset;
 	/*
 	 * As far as we know it doesn't make sense to support selection of
 	 * these options at run-time, so use the existing CONFIG options.
@@ -111,7 +114,7 @@ static int ns16550_readb(NS16550_t port, int offset)
 	unsigned char *addr;
 
 	offset *= 1 << plat->reg_shift;
-	addr = map_sysmem(plat->base, 0) + offset;
+	addr = map_physmem(plat->base, 0, MAP_NOCACHE) + offset;
 
 	return serial_in_shift(addr, plat->reg_shift);
 }
@@ -257,7 +260,7 @@ int NS16550_tstc(NS16550_t com_port)
 			(1 << CONFIG_DEBUG_UART_SHIFT), \
 		CONFIG_DEBUG_UART_SHIFT)
 
-void debug_uart_init(void)
+static inline void _debug_uart_init(void)
 {
 	struct NS16550 *com_port = (struct NS16550 *)CONFIG_DEBUG_UART_BASE;
 	int baud_divisor;
@@ -365,7 +368,7 @@ int ns16550_serial_ofdata_to_platdata(struct udevice *dev)
 
 	/* try Processor Local Bus device first */
 	addr = dev_get_addr(dev);
-#ifdef CONFIG_PCI
+#if defined(CONFIG_PCI) && defined(CONFIG_DM_PCI)
 	if (addr == FDT_ADDR_T_NONE) {
 		/* then try pci device */
 		struct fdt_pci_addr pci_addr;
@@ -386,8 +389,7 @@ int ns16550_serial_ofdata_to_platdata(struct udevice *dev)
 				return ret;
 		}
 
-		ret = fdtdec_get_pci_bar32(gd->fdt_blob, dev->of_offset,
-					   &pci_addr, &bar);
+		ret = fdtdec_get_pci_bar32(dev, &pci_addr, &bar);
 		if (ret)
 			return ret;
 
@@ -400,7 +402,14 @@ int ns16550_serial_ofdata_to_platdata(struct udevice *dev)
 
 	plat->base = addr;
 	plat->reg_shift = fdtdec_get_int(gd->fdt_blob, dev->of_offset,
-					 "reg-shift", 1);
+					 "reg-shift", 0);
+	plat->clock = fdtdec_get_int(gd->fdt_blob, dev->of_offset,
+				     "clock-frequency",
+				     CONFIG_SYS_NS16550_CLK);
+	if (!plat->clock) {
+		debug("ns16550 clock not defined\n");
+		return -EINVAL;
+	}
 
 	return 0;
 }
@@ -412,4 +421,41 @@ const struct dm_serial_ops ns16550_serial_ops = {
 	.getc = ns16550_serial_getc,
 	.setbrg = ns16550_serial_setbrg,
 };
+
+#if CONFIG_IS_ENABLED(OF_CONTROL)
+/*
+ * Please consider existing compatible strings before adding a new
+ * one to keep this table compact. Or you may add a generic "ns16550"
+ * compatible string to your dts.
+ */
+static const struct udevice_id ns16550_serial_ids[] = {
+	{ .compatible = "ns16550" },
+	{ .compatible = "ns16550a" },
+	{ .compatible = "nvidia,tegra20-uart" },
+	{ .compatible = "snps,dw-apb-uart" },
+	{ .compatible = "ti,omap2-uart" },
+	{ .compatible = "ti,omap3-uart" },
+	{ .compatible = "ti,omap4-uart" },
+	{ .compatible = "ti,am3352-uart" },
+	{ .compatible = "ti,am4372-uart" },
+	{ .compatible = "ti,dra742-uart" },
+	{}
+};
+#endif
+
+#if CONFIG_IS_ENABLED(SERIAL_PRESENT)
+U_BOOT_DRIVER(ns16550_serial) = {
+	.name	= "ns16550_serial",
+	.id	= UCLASS_SERIAL,
+#if CONFIG_IS_ENABLED(OF_CONTROL)
+	.of_match = ns16550_serial_ids,
+	.ofdata_to_platdata = ns16550_serial_ofdata_to_platdata,
+	.platdata_auto_alloc_size = sizeof(struct ns16550_platdata),
+#endif
+	.priv_auto_alloc_size = sizeof(struct NS16550),
+	.probe = ns16550_serial_probe,
+	.ops	= &ns16550_serial_ops,
+	.flags	= DM_FLAG_PRE_RELOC,
+};
+#endif
 #endif /* CONFIG_DM_SERIAL */

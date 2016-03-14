@@ -64,7 +64,7 @@ RSA_OBJS-$(CONFIG_FIT_SIGNATURE) := $(addprefix lib/rsa/, \
 					rsa-sign.o rsa-verify.o rsa-checksum.o \
 					rsa-mod-exp.o)
 
-ROCKCHIP_OBS = lib/rc4.o rkcommon.o rkimage.o rksd.o
+ROCKCHIP_OBS = lib/rc4.o rkcommon.o rkimage.o rksd.o rkspi.o
 
 # common objs for dumpimage and mkimage
 dumpimage-mkimage-objs := aisimage.o \
@@ -98,6 +98,7 @@ dumpimage-mkimage-objs := aisimage.o \
 			lib/sha256.o \
 			common/hash.o \
 			ublimage.o \
+			zynqimage.o \
 			$(LIBFDT_OBJS) \
 			$(RSA_OBJS-y)
 
@@ -128,6 +129,14 @@ endif
 ifneq ($(CONFIG_MX23)$(CONFIG_MX28)$(CONFIG_FIT_SIGNATURE),)
 HOSTLOADLIBES_mkimage += \
 	$(shell pkg-config --libs libssl libcrypto 2> /dev/null || echo "-lssl -lcrypto")
+
+# OS X deprecate openssl in favour of CommonCrypto, supress deprecation
+# warnings on those systems
+ifeq ($(HOSTOS),darwin)
+HOSTCFLAGS_mxsimage.o += -Wno-deprecated-declarations
+HOSTCFLAGS_image-sig.o += -Wno-deprecated-declarations
+HOSTCFLAGS_rsa-sign.o += -Wno-deprecated-declarations
+endif
 endif
 
 HOSTLOADLIBES_dumpimage := $(HOSTLOADLIBES_mkimage)
@@ -155,7 +164,7 @@ ubsha1-objs := os_support.o ubsha1.o lib/sha1.o
 HOSTCFLAGS_ubsha1.o := -pedantic
 
 hostprogs-$(CONFIG_KIRKWOOD) += kwboot
-hostprogs-$(CONFIG_ARMADA_XP) += kwboot
+hostprogs-$(CONFIG_ARCH_MVEBU) += kwboot
 hostprogs-y += proftool
 hostprogs-$(CONFIG_STATIC_RELA) += relocate-rela
 

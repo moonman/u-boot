@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for PR1 Appliance
+ * U-Boot - Configuration file for PR1 Appliance
  *
  * based on bf537-stamp.h
  * Copyright (c) Switchfin Org. <dpn@switchfin.org>
@@ -83,7 +83,6 @@
 #define CONFIG_BFIN_SPI
 #define CONFIG_ENV_SPI_MAX_HZ	30000000
 #define CONFIG_SF_DEFAULT_SPEED	30000000
-#define CONFIG_SPI_FLASH_STMICRO
 
 
 /*

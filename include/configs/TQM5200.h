@@ -19,7 +19,6 @@
 #define CONFIG_MPC5200		1	/* This is an MPC5200 CPU		*/
 #define CONFIG_TQM5200		1	/* ... on TQM5200 module		*/
 #undef CONFIG_TQM5200_REV100		/*  define for revision 100 modules	*/
-#define CONFIG_SYS_GENERIC_BOARD
 #define CONFIG_DISPLAY_BOARDINFO
 
 /*
@@ -335,7 +334,7 @@
  *
  * Please notice, that the resulting clock frequency could differ from the
  * configured value. This is because the I2C clock is derived from system
- * clock over a frequency divider with only a few divider values. U-boot
+ * clock over a frequency divider with only a few divider values. U-Boot
  * calculates the best approximation for CONFIG_SYS_I2C_SPEED. However the calculated
  * approximation allways lies below the configured value, never above.
  */

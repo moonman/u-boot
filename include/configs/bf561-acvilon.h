@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for BF561 Acvilon System On Module
+ * U-Boot - Configuration file for BF561 Acvilon System On Module
  * For more information please go to http://www.niistt.ru/
  */
 
@@ -114,7 +114,6 @@
 #define CONFIG_BFIN_SPI
 #define CONFIG_ENV_SPI_MAX_HZ		10000000
 #define CONFIG_SF_DEFAULT_SPEED		10000000
-#define CONFIG_SPI_FLASH_ATMEL
 
 
 /*

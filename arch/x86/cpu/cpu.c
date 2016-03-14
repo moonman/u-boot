@@ -142,7 +142,12 @@ void arch_setup_gd(gd_t *new_gd)
 
 	gdt_addr = new_gd->arch.gdt;
 
-	/* CS: code, read/execute, 4 GB, base 0 */
+	/*
+	 * CS: code, read/execute, 4 GB, base 0
+	 *
+	 * Some OS (like VxWorks) requires GDT entry 1 to be the 32-bit CS
+	 */
+	gdt_addr[X86_GDT_ENTRY_UNUSED] = GDT_ENTRY(0xc09b, 0, 0xfffff);
 	gdt_addr[X86_GDT_ENTRY_32BIT_CS] = GDT_ENTRY(0xc09b, 0, 0xfffff);
 
 	/* DS: data, read/write, 4 GB, base 0 */
@@ -394,6 +399,11 @@ int x86_cpu_init_f(void)
 		}
 	}
 
+#ifdef CONFIG_I8254_TIMER
+	/* Set up the i8254 timer if required */
+	i8254_init();
+#endif
+
 	return 0;
 }
 
@@ -636,24 +646,6 @@ int cpu_jump_to_64bit(ulong setup_base, ulong target)
 
 void show_boot_progress(int val)
 {
-#if MIN_PORT80_KCLOCKS_DELAY
-	/*
-	 * Scale the time counter reading to avoid using 64 bit arithmetics.
-	 * Can't use get_timer() here becuase it could be not yet
-	 * initialized or even implemented.
-	 */
-	if (!gd->arch.tsc_prev) {
-		gd->arch.tsc_base_kclocks = rdtsc() / 1000;
-		gd->arch.tsc_prev = 0;
-	} else {
-		uint32_t now;
-
-		do {
-			now = rdtsc() / 1000 - gd->arch.tsc_base_kclocks;
-		} while (now < (gd->arch.tsc_prev + MIN_PORT80_KCLOCKS_DELAY));
-		gd->arch.tsc_prev = now;
-	}
-#endif
 	outb(val, POST_PORT);
 }
 
@@ -696,7 +688,7 @@ static int x86_mp_init(void)
 }
 #endif
 
-__weak int x86_init_cpus(void)
+static int x86_init_cpus(void)
 {
 #ifdef CONFIG_SMP
 	debug("Init additional CPUs\n");
@@ -717,8 +709,24 @@ __weak int x86_init_cpus(void)
 
 int cpu_init_r(void)
 {
-	if (ll_boot_init())
-		return x86_init_cpus();
+	struct udevice *dev;
+	int ret;
+
+	if (!ll_boot_init())
+		return 0;
+
+	ret = x86_init_cpus();
+	if (ret)
+		return ret;
+
+	/*
+	 * Set up the northbridge, PCH and LPC if available. Note that these
+	 * may have had some limited pre-relocation init if they were probed
+	 * before relocation, but this is post relocation.
+	 */
+	uclass_first_device(UCLASS_NORTHBRIDGE, &dev);
+	uclass_first_device(UCLASS_PCH, &dev);
+	uclass_first_device(UCLASS_LPC, &dev);
 
 	return 0;
 }

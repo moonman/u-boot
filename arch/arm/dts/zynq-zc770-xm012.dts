@@ -20,21 +20,14 @@
 	};
 
 	chosen {
-		bootargs = "console=ttyPS0,115200 root=/dev/ram rw earlyprintk";
-		linux,stdout-path = &uart1;
-		stdout-path = &uart1;
+		bootargs = "root=/dev/ram rw earlyprintk";
+		stdout-path = "serial0:115200n8";
 	};
 
 	memory {
 		device_type = "memory";
 		reg = <0x0 0x40000000>;
 	};
-};
-
-&spi1 {
-	status = "okay";
-	num-cs = <4>;
-	is-decoded-cs = <0>;
 };
 
 &can1 {
@@ -61,6 +54,13 @@
 	};
 };
 
+&spi1 {
+	status = "okay";
+	num-cs = <4>;
+	is-decoded-cs = <0>;
+};
+
 &uart1 {
+	u-boot,dm-pre-reloc;
 	status = "okay";
 };

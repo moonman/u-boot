@@ -16,7 +16,7 @@ config USE_PRIVATE_LIBGCC
 	depends on HAVE_PRIVATE_LIBGCC
 	help
 	  This option allows you to use the built-in libgcc implementation
-	  of U-boot instead of the one privided by the compiler.
+	  of U-Boot instead of the one privided by the compiler.
 	  If unsure, say N.
 
 config SYS_HZ
@@ -27,14 +27,15 @@ config SYS_HZ
 	  get_timer() must operate in milliseconds and this option must be
 	  set to 1000.
 
-config SYS_VSNPRINTF
-	bool "Enable safe version of sprintf()"
+config USE_TINY_PRINTF
+	bool "Enable tiny printf() version"
 	help
-	  Since sprintf() can overflow its buffer, it is common to use
-	  snprintf() instead, which knows the buffer size and can avoid
-	  overflow. However, this does increase code size slightly (for
-	  Thumb-2, about 420 bytes). Enable this option for safety when
-	  using sprintf() with data you do not control.
+	  This option enables a tiny, stripped down printf version.
+	  This should only be used in space limited environments,
+	  like SPL versions with hard memory limits. This version
+	  reduces the code size by about 2.5KiB on armv7.
+
+	  The supported format specifiers are %c, %s, %u/%d and %x.
 
 config REGEX
 	bool "Enable regular expression support"
@@ -56,6 +57,7 @@ source lib/rsa/Kconfig
 
 config TPM
 	bool "Trusted Platform Module (TPM) Support"
+	depends on DM
 	help
 	  This enables support for TPMs which can be used to provide security
 	  features for your board. The TPM can be connected via LPC or I2C

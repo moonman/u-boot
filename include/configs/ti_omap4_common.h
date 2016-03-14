@@ -57,12 +57,13 @@
 /*
  * Hardware drivers
  */
-#define CONFIG_SYS_NS16550
+#define CONFIG_SYS_NS16550_CLK		48000000
+#if defined(CONFIG_SPL_BUILD) || !defined(CONFIG_DM_SERIAL)
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	(-4)
-#define CONFIG_SYS_NS16550_CLK		48000000
-#define CONFIG_CONS_INDEX		3
 #define CONFIG_SYS_NS16550_COM3		UART3_BASE
+#endif
+#define CONFIG_CONS_INDEX		3
 
 /* TWL6030 */
 #ifndef CONFIG_SPL_BUILD
@@ -81,6 +82,32 @@
 /*
  * Environment setup
  */
+#define BOOTENV_DEV_LEGACY_MMC(devtypeu, devtypel, instance) \
+	"bootcmd_" #devtypel #instance "=" \
+	"setenv mmcdev " #instance"; "\
+	"setenv bootpart " #instance":2 ; "\
+	"run mmcboot\0"
+
+#define BOOTENV_DEV_NAME_LEGACY_MMC(devtypeu, devtypel, instance) \
+	#devtypel #instance " "
+
+#define BOOTENV_DEV_NAME_NAND(devtypeu, devtypel, instance) \
+	#devtypel #instance " "
+
+#define BOOT_TARGET_DEVICES(func) \
+	func(MMC, mmc, 0) \
+	func(LEGACY_MMC, legacy_mmc, 0) \
+	func(MMC, mmc, 1) \
+	func(LEGACY_MMC, legacy_mmc, 1) \
+	func(PXE, pxe, na) \
+	func(DHCP, dhcp, na)
+
+#define CONFIG_BOOTCOMMAND \
+	"run findfdt; " \
+	"run distro_bootcmd"
+
+#include <config_distro_bootcmd.h>
+
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	DEFAULT_LINUX_BOOT_ENV \
 	DEFAULT_MMC_TI_ARGS \
@@ -119,30 +146,7 @@
 		"if test $fdtfile = undefined; then " \
 			"echo WARNING: Could not determine device tree to use; fi; \0" \
 	"loadfdt=load mmc ${bootpart} ${fdtaddr} ${bootdir}/${fdtfile}\0" \
-
-#define CONFIG_BOOTCOMMAND \
-	"run findfdt; " \
-	"mmc dev ${mmcdev}; if mmc rescan; then " \
-		"echo SD/MMC found on device ${mmcdev};" \
-		"if run loadbootscript; then " \
-			"run bootscript; " \
-		"else " \
-			"if run loadbootenv; then " \
-				"run importbootenv; " \
-			"fi;" \
-			"if test -n ${uenvcmd}; then " \
-				"echo Running uenvcmd ...;" \
-				"run uenvcmd;" \
-			"fi;" \
-		"fi;" \
-		"if run loadimage; then " \
-			"run loadfdt;" \
-			"run mmcboot; " \
-		"fi; " \
-		"if run loaduimage; then " \
-			"run uimageboot;" \
-		"fi; " \
-	"fi"
+	BOOTENV
 
 /*
  * Defines for SPL

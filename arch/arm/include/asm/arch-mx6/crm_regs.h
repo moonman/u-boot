@@ -103,6 +103,97 @@ struct mxc_ccm_reg {
 	u32 analog_pfd_528_set;
 	u32 analog_pfd_528_clr;
 	u32 analog_pfd_528_tog;
+	/* PMU Memory Map/Register Definition */
+	u32 pmu_reg_1p1;
+	u32 pmu_reg_1p1_set;
+	u32 pmu_reg_1p1_clr;
+	u32 pmu_reg_1p1_tog;
+	u32 pmu_reg_3p0;
+	u32 pmu_reg_3p0_set;
+	u32 pmu_reg_3p0_clr;
+	u32 pmu_reg_3p0_tog;
+	u32 pmu_reg_2p5;
+	u32 pmu_reg_2p5_set;
+	u32 pmu_reg_2p5_clr;
+	u32 pmu_reg_2p5_tog;
+	u32 pmu_reg_core;
+	u32 pmu_reg_core_set;
+	u32 pmu_reg_core_clr;
+	u32 pmu_reg_core_tog;
+	u32 pmu_misc0;
+	u32 pmu_misc0_set;
+	u32 pmu_misc0_clr;
+	u32 pmu_misc0_tog;
+	u32 pmu_misc1;
+	u32 pmu_misc1_set;
+	u32 pmu_misc1_clr;
+	u32 pmu_misc1_tog;
+	u32 pmu_misc2;
+	u32 pmu_misc2_set;
+	u32 pmu_misc2_clr;
+	u32 pmu_misc2_tog;
+	/* TEMPMON Memory Map/Register Definition */
+	u32 tempsense0;
+	u32 tempsense0_set;
+	u32 tempsense0_clr;
+	u32 tempsense0_tog;
+	u32 tempsense1;
+	u32 tempsense1_set;
+	u32 tempsense1_clr;
+	u32 tempsense1_tog;
+	/* USB Analog Memory Map/Register Definition */
+	u32 usb1_vbus_detect;
+	u32 usb1_vbus_detect_set;
+	u32 usb1_vbus_detect_clr;
+	u32 usb1_vbus_detect_tog;
+	u32 usb1_chrg_detect;
+	u32 usb1_chrg_detect_set;
+	u32 usb1_chrg_detect_clr;
+	u32 usb1_chrg_detect_tog;
+	u32 usb1_vbus_det_stat;
+	u32 usb1_vbus_det_stat_set;
+	u32 usb1_vbus_det_stat_clr;
+	u32 usb1_vbus_det_stat_tog;
+	u32 usb1_chrg_det_stat;
+	u32 usb1_chrg_det_stat_set;
+	u32 usb1_chrg_det_stat_clr;
+	u32 usb1_chrg_det_stat_tog;
+	u32 usb1_loopback;
+	u32 usb1_loopback_set;
+	u32 usb1_loopback_clr;
+	u32 usb1_loopback_tog;
+	u32 usb1_misc;
+	u32 usb1_misc_set;
+	u32 usb1_misc_clr;
+	u32 usb1_misc_tog;
+	u32 usb2_vbus_detect;
+	u32 usb2_vbus_detect_set;
+	u32 usb2_vbus_detect_clr;
+	u32 usb2_vbus_detect_tog;
+	u32 usb2_chrg_detect;
+	u32 usb2_chrg_detect_set;
+	u32 usb2_chrg_detect_clr;
+	u32 usb2_chrg_detect_tog;
+	u32 usb2_vbus_det_stat;
+	u32 usb2_vbus_det_stat_set;
+	u32 usb2_vbus_det_stat_clr;
+	u32 usb2_vbus_det_stat_tog;
+	u32 usb2_chrg_det_stat;
+	u32 usb2_chrg_det_stat_set;
+	u32 usb2_chrg_det_stat_clr;
+	u32 usb2_chrg_det_stat_tog;
+	u32 usb2_loopback;
+	u32 usb2_loopback_set;
+	u32 usb2_loopback_clr;
+	u32 usb2_loopback_tog;
+	u32 usb2_misc;
+	u32 usb2_misc_set;
+	u32 usb2_misc_clr;
+	u32 usb2_misc_tog;
+	u32 digprog;
+	u32 reserved1[7];
+	/* For i.MX 6SoloLite */
+	u32 digprog_sololite;
 };
 #endif
 
@@ -174,6 +265,9 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CBCMR_GPU3D_SHADER_PODF_OFFSET		29
 #define MXC_CCM_CBCMR_GPU3D_CORE_PODF_MASK		(0x7 << 26)
 #define MXC_CCM_CBCMR_GPU3D_CORE_PODF_OFFSET		26
+/* LCDIF on i.MX6SX/UL */
+#define MXC_CCM_CBCMR_LCDIF1_PODF_MASK                  (0x7 << 23)
+#define MXC_CCM_CBCMR_LCDIF1_PODF_OFFSET                23
 #define MXC_CCM_CBCMR_GPU2D_CORE_PODF_MASK		(0x7 << 23)
 #define MXC_CCM_CBCMR_GPU2D_CORE_PODF_OFFSET		23
 #define MXC_CCM_CBCMR_PRE_PERIPH2_CLK_SEL_MASK		(0x3 << 21)
@@ -210,7 +304,10 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CSCMR1_ACLK_EMI_OFFSET			27
 #define MXC_CCM_CSCMR1_ACLK_EMI_SLOW_PODF_MASK		(0x7 << 23)
 #define MXC_CCM_CSCMR1_ACLK_EMI_SLOW_PODF_OFFSET	23
-/* ACLK_EMI_PODF is LCFIF2_PODF on MX6SX */
+/* LCFIF2_PODF on i.MX6SX */
+#define MXC_CCM_CSCMR1_LCDIF2_PODF_MASK			(0x7 << 20)
+#define MXC_CCM_CSCMR1_LCDIF2_PODF_OFFSET               20
+/* ACLK_EMI on i.MX6DQ/SDL/DQP */
 #define MXC_CCM_CSCMR1_ACLK_EMI_PODF_MASK		(0x7 << 20)
 #define MXC_CCM_CSCMR1_ACLK_EMI_PODF_OFFSET		20
 /* CSCMR1_GPMI/BCH exist on i.MX6UL */
@@ -400,6 +497,20 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CSCDR2_ECSPI_CLK_PODF_OFFSET		19
 /* ECSPI_CLK_SEL exists on i.MX6SX/SL/QP */
 #define MXC_CCM_CSCDR2_ECSPI_CLK_SEL_MASK		(0x1 << 18)
+/* LCDIF1 on i.MX6SX/UL */
+#define MXC_CCM_CSCDR2_LCDIF1_PRED_SEL_MASK             (0x7 << 15)
+#define MXC_CCM_CSCDR2_LCDIF1_PRED_SEL_OFFSET           15
+#define MXC_CCM_CSCDR2_LCDIF1_PRE_DIV_MASK              (0x7 << 12)
+#define MXC_CCM_CSCDR2_LCDIF1_PRE_DIV_OFFSET            12
+#define MXC_CCM_CSCDR2_LCDIF1_CLK_SEL_MASK              (0x7 << 9)
+#define MXC_CCM_CSCDR2_LCDIF1_CLK_SEL_OFFSET            9
+/* LCDIF2 on i.MX6SX */
+#define MXC_CCM_CSCDR2_LCDIF2_PRED_SEL_MASK             (0x7 << 6)
+#define MXC_CCM_CSCDR2_LCDIF2_PRED_SEL_OFFSET           6
+#define MXC_CCM_CSCDR2_LCDIF2_PRE_DIV_MASK              (0x7 << 3)
+#define MXC_CCM_CSCDR2_LCDIF2_PRE_DIV_OFFSET            3
+#define MXC_CCM_CSCDR2_LCDIF2_CLK_SEL_MASK              (0x7 << 0)
+#define MXC_CCM_CSCDR2_LCDIF2_CLK_SEL_OFFSET             0
 
 /* All IPU2_DI1 are LCDIF1 on MX6SX */
 #define MXC_CCM_CHSCCDR_IPU2_DI1_PRE_CLK_SEL_MASK	(0x7 << 15)
@@ -622,17 +733,16 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CCGR2_IPMUX3_MASK			(3 << MXC_CCM_CCGR2_IPMUX3_OFFSET)
 #define MXC_CCM_CCGR2_IPSYNC_IP2APB_TZASC1_IPGS_OFFSET	22
 #define MXC_CCM_CCGR2_IPSYNC_IP2APB_TZASC1_IPGS_MASK	(3 << MXC_CCM_CCGR2_IPSYNC_IP2APB_TZASC1_IPGS_OFFSET)
-#ifdef CONFIG_MX6SX
+/* i.MX6SX/UL LCD and PXP */
 #define MXC_CCM_CCGR2_LCD_OFFSET			28
 #define MXC_CCM_CCGR2_LCD_MASK				(3 << MXC_CCM_CCGR2_LCD_OFFSET)
 #define MXC_CCM_CCGR2_PXP_OFFSET			30
 #define MXC_CCM_CCGR2_PXP_MASK				(3 << MXC_CCM_CCGR2_PXP_OFFSET)
-#else
+
 #define MXC_CCM_CCGR2_IPSYNC_IP2APB_TZASC2_IPG_OFFSET	24
 #define MXC_CCM_CCGR2_IPSYNC_IP2APB_TZASC2_IPG_MASK	(3 << MXC_CCM_CCGR2_IPSYNC_IP2APB_TZASC2_IPG_OFFSET)
 #define MXC_CCM_CCGR2_IPSYNC_VDOA_IPG_MASTER_CLK_OFFSET	26
 #define MXC_CCM_CCGR2_IPSYNC_VDOA_IPG_MASTER_CLK_MASK	(3 << MXC_CCM_CCGR2_IPSYNC_VDOA_IPG_MASTER_CLK_OFFSET)
-#endif
 
 /* Exist on i.MX6SX */
 #define MXC_CCM_CCGR3_M4_OFFSET					2
@@ -685,6 +795,13 @@ struct mxc_ccm_reg {
 #define MXC_CCM_CCGR3_MMDC_CORE_IPG_CLK_P0_MASK			(3 << MXC_CCM_CCGR3_MMDC_CORE_IPG_CLK_P0_OFFSET)
 #define MXC_CCM_CCGR3_MMDC_CORE_IPG_CLK_P1_OFFSET		26
 #define MXC_CCM_CCGR3_MMDC_CORE_IPG_CLK_P1_MASK			(3 << MXC_CCM_CCGR3_MMDC_CORE_IPG_CLK_P1_OFFSET)
+
+#define MXC_CCM_CCGR3_DISP_AXI_OFFSET                           6
+#define MXC_CCM_CCGR3_DISP_AXI_MASK                             (3 << MXC_CCM_CCGR3_DISP_AXI_OFFSET)
+#define MXC_CCM_CCGR3_LCDIF2_PIX_OFFSET                         8
+#define MXC_CCM_CCGR3_LCDIF2_PIX_MASK                           (3 << MXC_CCM_CCGR3_LCDIF2_PIX_OFFSET)
+#define MXC_CCM_CCGR3_LCDIF1_PIX_OFFSET                         10
+#define MXC_CCM_CCGR3_LCDIF1_PIX_MASK                           (3 << MXC_CCM_CCGR3_LCDIF1_PIX_OFFSET)
 /* AXI on i.MX6UL */
 #define MXC_CCM_CCGR3_AXI_CLK_OFFSET				28
 #define MXC_CCM_CCGR3_AXI_CLK_MASK				(3 << MXC_CCM_CCGR3_AXI_CLK_OFFSET)
@@ -1109,5 +1226,17 @@ struct mxc_ccm_reg {
 	(((v) << 0) & BM_ANADIG_PFD_528_PFD0_FRAC)
 
 #define BM_ANADIG_ANA_MISC0_REFTOP_SELBIASOFF 0x00000008
+
+#define BM_PMU_MISC2_AUDIO_DIV_MSB (1 << 23)
+#define BP_PMU_MISC2_AUDIO_DIV_MSB 23
+
+#define BM_PMU_MISC2_AUDIO_DIV_LSB (1 << 15)
+#define BP_PMU_MISC2_AUDIO_DIV_LSB 15
+
+#define PMU_MISC2_AUDIO_DIV(v) \
+	(((v & BM_PMU_MISC2_AUDIO_DIV_MSB) >> \
+	(BP_PMU_MISC2_AUDIO_DIV_MSB - 1)) | \
+	((v & BM_PMU_MISC2_AUDIO_DIV_LSB) >> \
+	 BP_PMU_MISC2_AUDIO_DIV_LSB))
 
 #endif /*__ARCH_ARM_MACH_MX6_CCM_REGS_H__ */

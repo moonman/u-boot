@@ -1,5 +1,5 @@
 /*
- * Configuration settings for the Novena U-boot.
+ * Configuration settings for the Novena U-Boot.
  *
  * Copyright (C) 2014 Marek Vasut <marex@denx.de>
  *
@@ -16,6 +16,7 @@
 #define CONFIG_FIT
 #define CONFIG_KEYBOARD
 
+#include <config_distro_defaults.h>
 #include "mx6_common.h"
 
 /* U-Boot Commands */
@@ -58,7 +59,7 @@
 /* Booting Linux */
 #define CONFIG_BOOTFILE			"fitImage"
 #define CONFIG_BOOTARGS			"console=ttymxc1,115200 "
-#define CONFIG_BOOTCOMMAND		"run net_nfs"
+#define CONFIG_BOOTCOMMAND		"run distro_bootcmd ; run net_nfs"
 #define CONFIG_HOSTNAME			novena
 
 /* Physical Memory Map */
@@ -82,6 +83,7 @@
 
 /* SPL */
 #define CONFIG_SPL_FAT_SUPPORT
+#define CONFIG_SPL_EXT_SUPPORT
 #define CONFIG_SPL_MMC_SUPPORT
 #include "imx6_spl.h"			/* common IMX6 SPL configuration */
 
@@ -108,11 +110,12 @@
 #define CONFIG_I2C_MULTI_BUS
 #define CONFIG_I2C_MXC
 #define CONFIG_SYS_I2C_SPEED		100000
+#define CONFIG_SYS_SPD_BUS_NUM		0
 
 /* I2C EEPROM */
 #ifdef CONFIG_CMD_EEPROM
 #define CONFIG_SYS_I2C_EEPROM_ADDR_LEN	2
-#define CONFIG_SYS_SPD_BUS_NUM		2
+#define CONFIG_SYS_I2C_EEPROM_BUS	2
 #endif
 
 /* MMC Configs */
@@ -189,6 +192,7 @@
 #endif
 
 /* Extra U-Boot environment. */
+#ifndef CONFIG_SPL_BUILD
 #define CONFIG_EXTRA_ENV_SETTINGS					\
 	"fdt_high=0xffffffff\0"						\
 	"initrd_high=0xffffffff\0"					\
@@ -197,7 +201,12 @@
 	"bootdev=/dev/mmcblk0p1\0"					\
 	"rootdev=/dev/mmcblk0p2\0"					\
 	"netdev=eth0\0"							\
-	"kernel_addr_r=0x18000000\0"					\
+	"kernel_addr_r="__stringify(CONFIG_LOADADDR)"\0"		\
+	"pxefile_addr_r="__stringify(CONFIG_LOADADDR)"\0"		\
+	"scriptaddr="__stringify(CONFIG_LOADADDR)"\0"			\
+	"ramdisk_addr_r=0x28000000\0"		   			\
+	"fdt_addr_r=0x18000000\0"					\
+	"fdtfile=imx6q-novena.dtb\0"					\
 	"addcons="							\
 		"setenv bootargs ${bootargs} "				\
 		"console=${consdev},${baudrate}\0"			\
@@ -241,5 +250,19 @@
 		"fatwrite mmc 0:1 ${loadaddr} u-boot.img ${filesize} ; "\
 		"fi ; "							\
 		"fi\0"							\
+	BOOTENV
+
+#define BOOT_TARGET_DEVICES(func) \
+	func(MMC, mmc, 0) \
+	func(USB, usb, 0) \
+	func(SATA, sata, 0) \
+	func(PXE, pxe, na) \
+	func(DHCP, dhcp, na)
+
+#include <config_distro_bootcmd.h>
+
+#else
+#define CONFIG_EXTRA_ENV_SETTINGS
+#endif /* CONFIG_SPL_BUILD */
 
 #endif				/* __CONFIG_H */

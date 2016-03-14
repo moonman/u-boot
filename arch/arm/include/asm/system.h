@@ -1,6 +1,9 @@
 #ifndef __ASM_ARM_SYSTEM_H
 #define __ASM_ARM_SYSTEM_H
 
+#include <common.h>
+#include <linux/compiler.h>
+
 #ifdef CONFIG_ARM64
 
 /*
@@ -14,9 +17,15 @@
 #define CR_WXN		(1 << 19)	/* Write Permision Imply XN	*/
 #define CR_EE		(1 << 25)	/* Exception (Big) Endian	*/
 
+#ifndef CONFIG_SYS_FULL_VA
 #define PGTABLE_SIZE	(0x10000)
+#else
+#define PGTABLE_SIZE	CONFIG_SYS_PGTABLE_SIZE
+#endif
+
 /* 2MB granularity */
 #define MMU_SECTION_SHIFT	21
+#define MMU_SECTION_SIZE	(1 << MMU_SECTION_SHIFT)
 
 #ifndef __ASSEMBLY__
 
@@ -71,6 +80,17 @@ static inline void set_sctlr(unsigned int val)
 	asm volatile("isb");
 }
 
+static inline unsigned long read_mpidr(void)
+{
+	unsigned long val;
+
+	asm volatile("mrs %0, mpidr_el1" : "=r" (val));
+
+	return val;
+}
+
+#define BSP_COREID	0
+
 void __asm_flush_dcache_all(void);
 void __asm_invalidate_dcache_all(void);
 void __asm_flush_dcache_range(u64 start, u64 end);
@@ -87,6 +107,24 @@ void protect_secure_region(void);
 void smp_kick_all_cpus(void);
 
 void flush_l3_cache(void);
+
+/*
+ *Issue a hypervisor call in accordance with ARM "SMC Calling convention",
+ * DEN0028A
+ *
+ * @args: input and output arguments
+ *
+ */
+void hvc_call(struct pt_regs *args);
+
+/*
+ *Issue a secure monitor call in accordance with ARM "SMC Calling convention",
+ * DEN0028A
+ *
+ * @args: input and output arguments
+ *
+ */
+void smc_call(struct pt_regs *args);
 
 #endif	/* __ASSEMBLY__ */
 
@@ -136,7 +174,9 @@ void flush_l3_cache(void);
 #define CR_AFE	(1 << 29)	/* Access flag enable			*/
 #define CR_TE	(1 << 30)	/* Thumb exception enable		*/
 
+#ifndef PGTABLE_SIZE
 #define PGTABLE_SIZE		(4096 * 4)
+#endif
 
 /*
  * This is used to ensure the compiler did actually allocate the register we
@@ -219,7 +259,7 @@ static inline void set_dacr(unsigned int val)
 	isb();
 }
 
-#ifdef CONFIG_ARMV7
+#ifdef CONFIG_CPU_V7
 /* Short-Descriptor Translation Table Level 1 Bits */
 #define TTB_SECT_NS_MASK	(1 << 19)
 #define TTB_SECT_NG_MASK	(1 << 17)
@@ -234,8 +274,7 @@ static inline void set_dacr(unsigned int val)
 
 /* options available for data cache on each page */
 enum dcache_option {
-	DCACHE_OFF = TTB_SECT_S_MASK | TTB_SECT_DOMAIN(0) |
-					TTB_SECT_XN_MASK | TTB_SECT,
+	DCACHE_OFF = TTB_SECT_DOMAIN(0) | TTB_SECT_XN_MASK | TTB_SECT,
 	DCACHE_WRITETHROUGH = DCACHE_OFF | TTB_SECT_C_MASK,
 	DCACHE_WRITEBACK = DCACHE_WRITETHROUGH | TTB_SECT_B_MASK,
 	DCACHE_WRITEALLOC = DCACHE_WRITEBACK | TTB_SECT_TEX(1),
@@ -256,7 +295,7 @@ enum {
 	MMU_SECTION_SIZE	= 1 << MMU_SECTION_SHIFT,
 };
 
-#ifdef CONFIG_ARMV7
+#ifdef CONFIG_CPU_V7
 /* TTBR0 bits */
 #define TTBR0_BASE_ADDR_MASK	0xFFFFC000
 #define TTBR0_RGN_NC			(0 << 3)
@@ -278,11 +317,6 @@ enum {
  */
 void mmu_page_table_flush(unsigned long start, unsigned long stop);
 
-#ifdef CONFIG_SYS_NONCACHED_MEMORY
-void noncached_init(void);
-phys_addr_t noncached_alloc(size_t size, size_t align);
-#endif /* CONFIG_SYS_NONCACHED_MEMORY */
-
 #endif /* __ASSEMBLY__ */
 
 #define arch_align_stack(x) (x)
@@ -301,6 +335,11 @@ phys_addr_t noncached_alloc(size_t size, size_t align);
  */
 void mmu_set_region_dcache_behaviour(phys_addr_t start, size_t size,
 				     enum dcache_option option);
+
+#ifdef CONFIG_SYS_NONCACHED_MEMORY
+void noncached_init(void);
+phys_addr_t noncached_alloc(size_t size, size_t align);
+#endif /* CONFIG_SYS_NONCACHED_MEMORY */
 
 #endif /* __ASSEMBLY__ */
 

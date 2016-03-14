@@ -20,9 +20,11 @@
 #define CONFIG_DISPLAY_BOARDINFO
 
 #define CONFIG_SYS_NO_FLASH		/* No NOR Flash */
-#define CONFIG_SKIP_LOWLEVEL_INIT	/* U-boot is a 2nd stage bootloader */
+#define CONFIG_SKIP_LOWLEVEL_INIT	/* U-Boot is a 2nd stage bootloader */
 
 #define CONFIG_HW_WATCHDOG
+
+#define CONFIG_OF_LIBFDT
 
 #define CONFIG_MACH_TYPE	MACH_TYPE_TS48XX
 
@@ -36,9 +38,6 @@
 #define CONFIG_SETUP_MEMORY_TAGS
 #define CONFIG_INITRD_TAG
 #define CONFIG_REVISION_TAG
-
-/* use common/board_f.c instead of arch/<arch>/lib/<board>.c */
-#define CONFIG_SYS_GENERIC_BOARD
 
 /*
  * Size of malloc() pool

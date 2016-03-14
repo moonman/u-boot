@@ -74,19 +74,14 @@ ENTRY(_main)
 #else
 	ldr	x0, =(CONFIG_SYS_INIT_SP_ADDR)
 #endif
-	sub	x18, x0, #GD_SIZE	/* allocate one GD above SP */
-	bic	x18, x18, #0x7		/* 8-byte alignment for GD */
-zero_gd:
-	sub	x0, x0, #0x8
-	str	xzr, [x0]
-	cmp	x0, x18
-	b.gt	zero_gd
-#if defined(CONFIG_SYS_MALLOC_F_LEN)
-	ldr	x0, =CONFIG_SYS_MALLOC_F_LEN
-	sub	x0, x18, x0
-	str	x0, [x18, #GD_MALLOC_BASE]
-#endif
 	bic	sp, x0, #0xf	/* 16-byte alignment for ABI compliance */
+	mov	x0, sp
+	bl	board_init_f_alloc_reserve
+	mov	sp, x0
+	/* set up gd here, outside any C code */
+	mov	x18, x0
+	bl	board_init_f_init_reserve
+
 	mov	x0, #0
 	bl	board_init_f
 

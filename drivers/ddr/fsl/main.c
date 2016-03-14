@@ -1,9 +1,7 @@
 /*
  * Copyright 2008-2014 Freescale Semiconductor, Inc.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * Version 2 as published by the Free Software Foundation.
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 /*
@@ -813,6 +811,7 @@ phys_size_t fsl_ddr_sdram(void)
 	info.board_need_mem_reset = board_need_mem_reset;
 	info.board_mem_reset = board_assert_mem_reset;
 	info.board_mem_de_reset = board_deassert_mem_reset;
+	remove_unused_controllers(&info);
 
 	return __fsl_ddr_sdram(&info);
 }
@@ -858,6 +857,7 @@ fsl_ddr_sdram_size(void)
 	info.num_ctrls = CONFIG_SYS_FSL_DDR_MAIN_NUM_CTRLS;
 	info.dimm_slots_per_ctrl = CONFIG_DIMM_SLOTS_PER_CTLR;
 	info.board_need_mem_reset = NULL;
+	remove_unused_controllers(&info);
 
 	/* Compute it once normally. */
 	total_memory = fsl_ddr_compute(&info, STEP_GET_SPD, 1);

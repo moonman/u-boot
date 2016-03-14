@@ -12,14 +12,16 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
+#define CONFIG_SYS_CACHELINE_SIZE	32
+
 #include <asm/arch/imx-regs.h>
 
 #define CONFIG_VF610
 #define CONFIG_SYS_THUMB_BUILD
 #define CONFIG_USE_ARCH_MEMCPY
 #define CONFIG_USE_ARCH_MEMSET
+#define CONFIG_SYS_FSL_CLK
 
-#define CONFIG_SYS_GENERIC_BOARD
 #define CONFIG_ARCH_MISC_INIT
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
@@ -36,14 +38,10 @@
 
 #define CONFIG_BOARD_EARLY_INIT_F
 
-#define CONFIG_FSL_LPUART
-#define LPUART_BASE			UART0_BASE
-
 /* Allow to overwrite serial and ethaddr */
 #define CONFIG_ENV_OVERWRITE
 #define CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
 #define CONFIG_VERSION_VARIABLE
-#define CONFIG_SYS_UART_PORT		(0)
 #define CONFIG_BAUDRATE			115200
 #define CONFIG_CMD_ASKENV
 
@@ -52,11 +50,6 @@
 #define CONFIG_SYS_NAND_ONFI_DETECTION
 #define CONFIG_SYS_MAX_NAND_DEVICE	1
 #define CONFIG_SYS_NAND_BASE		NFC_BASE_ADDR
-
-/* GPIO support */
-#define CONFIG_DM_GPIO
-#define CONFIG_CMD_GPIO
-#define CONFIG_VYBRID_GPIO
 
 /* Dynamic MTD partition support */
 #define CONFIG_CMD_MTDPARTS	/* Enable 'mtdparts' command line support */
@@ -266,12 +259,5 @@
 #define CONFIG_USB_STORAGE
 #define CONFIG_USB_FUNCTION_MASS_STORAGE
 #define CONFIG_CMD_USB_MASS_STORAGE
-
-/* Enable SPI support */
-#ifdef CONFIG_OF_CONTROL
-#define CONFIG_DM_SPI
-#define CONFIG_CMD_SPI
-#define CONFIG_FSL_DSPI
-#endif
 
 #endif /* __CONFIG_H */

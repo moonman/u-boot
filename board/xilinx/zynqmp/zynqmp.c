@@ -9,6 +9,7 @@
 #include <netdev.h>
 #include <ahci.h>
 #include <scsi.h>
+#include <asm/arch/clk.h>
 #include <asm/arch/hardware.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/io.h>
@@ -28,10 +29,18 @@ int board_early_init_r(void)
 {
 	u32 val;
 
-	val = readl(&crlapb_base->timestamp_ref_ctrl);
-	val |= ZYNQMP_CRL_APB_TIMESTAMP_REF_CTRL_CLKACT;
-	writel(val, &crlapb_base->timestamp_ref_ctrl);
+	if (current_el() == 3) {
+		val = readl(&crlapb_base->timestamp_ref_ctrl);
+		val |= ZYNQMP_CRL_APB_TIMESTAMP_REF_CTRL_CLKACT;
+		writel(val, &crlapb_base->timestamp_ref_ctrl);
 
+		/* Program freq register in System counter */
+		writel(zynqmp_get_system_timer_freq(),
+		       &iou_scntr_secure->base_frequency_id_register);
+		/* And enable system counter */
+		writel(ZYNQMP_IOU_SCNTR_COUNTER_CONTROL_REGISTER_EN,
+		       &iou_scntr_secure->counter_control_register);
+	}
 	/* Program freq register in System counter and enable system counter */
 	writel(gd->cpu_clk, &iou_scntr->base_frequency_id_register);
 	writel(ZYNQMP_IOU_SCNTR_COUNTER_CONTROL_REGISTER_HDBG |
@@ -48,11 +57,6 @@ int dram_init(void)
 	return 0;
 }
 
-int timer_init(void)
-{
-	return 0;
-}
-
 void reset_cpu(ulong addr)
 {
 }
@@ -65,53 +69,6 @@ void scsi_init(void)
 }
 #endif
 
-int board_eth_init(bd_t *bis)
-{
-	u32 ret = 0;
-
-#if defined(CONFIG_ZYNQ_GEM)
-# if defined(CONFIG_ZYNQ_GEM0)
-	ret |= zynq_gem_initialize(bis, ZYNQ_GEM_BASEADDR0,
-						CONFIG_ZYNQ_GEM_PHY_ADDR0, 0);
-# endif
-# if defined(CONFIG_ZYNQ_GEM1)
-	ret |= zynq_gem_initialize(bis, ZYNQ_GEM_BASEADDR1,
-						CONFIG_ZYNQ_GEM_PHY_ADDR1, 0);
-# endif
-# if defined(CONFIG_ZYNQ_GEM2)
-	ret |= zynq_gem_initialize(bis, ZYNQ_GEM_BASEADDR2,
-						CONFIG_ZYNQ_GEM_PHY_ADDR2, 0);
-# endif
-# if defined(CONFIG_ZYNQ_GEM3)
-	ret |= zynq_gem_initialize(bis, ZYNQ_GEM_BASEADDR3,
-						CONFIG_ZYNQ_GEM_PHY_ADDR3, 0);
-# endif
-#endif
-	return ret;
-}
-
-#ifdef CONFIG_CMD_MMC
-int board_mmc_init(bd_t *bd)
-{
-	int ret = 0;
-
-	u32 ver = zynqmp_get_silicon_version();
-
-	if (ver != ZYNQMP_CSU_VERSION_VELOCE) {
-#if defined(CONFIG_ZYNQ_SDHCI)
-# if defined(CONFIG_ZYNQ_SDHCI0)
-		ret = zynq_sdhci_init(ZYNQ_SDHCI_BASEADDR0);
-# endif
-# if defined(CONFIG_ZYNQ_SDHCI1)
-		ret |= zynq_sdhci_init(ZYNQ_SDHCI_BASEADDR1);
-# endif
-#endif
-	}
-
-	return ret;
-}
-#endif
-
 int board_late_init(void)
 {
 	u32 reg = 0;
@@ -120,10 +77,35 @@ int board_late_init(void)
 	reg = readl(&crlapb_base->boot_mode);
 	bootmode = reg & BOOT_MODES_MASK;
 
+	puts("Bootmode: ");
 	switch (bootmode) {
-	case SD_MODE:
+	case JTAG_MODE:
+		puts("JTAG_MODE\n");
+		setenv("modeboot", "jtagboot");
+		break;
+	case QSPI_MODE_24BIT:
+	case QSPI_MODE_32BIT:
+		setenv("modeboot", "qspiboot");
+		puts("QSPI_MODE\n");
+		break;
 	case EMMC_MODE:
+		puts("EMMC_MODE\n");
 		setenv("modeboot", "sdboot");
+		break;
+	case SD_MODE:
+		puts("SD_MODE\n");
+		setenv("modeboot", "sdboot");
+		break;
+	case SD_MODE1:
+		puts("SD_MODE1\n");
+#if defined(CONFIG_ZYNQ_SDHCI0) && defined(CONFIG_ZYNQ_SDHCI1)
+		setenv("sdbootdev", "1");
+#endif
+		setenv("modeboot", "sdboot");
+		break;
+	case NAND_MODE:
+		puts("NAND_MODE\n");
+		setenv("modeboot", "nandboot");
 		break;
 	default:
 		printf("Invalid Boot Mode:0x%x\n", bootmode);
@@ -135,7 +117,7 @@ int board_late_init(void)
 
 int checkboard(void)
 {
-	puts("Board:\tXilinx ZynqMP\n");
+	puts("Board: Xilinx ZynqMP\n");
 	return 0;
 }
 

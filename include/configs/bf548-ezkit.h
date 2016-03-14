@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for BF548 STAMP board
+ * U-Boot - Configuration file for BF548 STAMP board
  */
 
 #ifndef __CONFIG_BF548_EZKIT_H__
@@ -92,7 +92,6 @@
 #define CONFIG_BFIN_SPI
 #define CONFIG_ENV_SPI_MAX_HZ	30000000
 #define CONFIG_SF_DEFAULT_SPEED	30000000
-#define CONFIG_SPI_FLASH_STMICRO
 
 
 /*

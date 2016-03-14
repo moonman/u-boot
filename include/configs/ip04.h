@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for IP04 board (having BF532 processor)
+ * U-Boot - Configuration file for IP04 board (having BF532 processor)
  *
  * Copyright (c) 2006 Intratrade Ltd., Ivan Danov, idanov@gmail.com
  *
@@ -91,8 +91,6 @@
 #define CONFIG_BFIN_SPI
 #define CONFIG_ENV_SPI_MAX_HZ	30000000
 #define CONFIG_SF_DEFAULT_SPEED	30000000
-#define CONFIG_SPI_FLASH_STMICRO
-#define CONFIG_SPI_FLASH_WINBOND
 
 
 /*

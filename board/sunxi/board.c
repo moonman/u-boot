@@ -13,15 +13,7 @@
 
 #include <common.h>
 #include <mmc.h>
-#ifdef CONFIG_AXP152_POWER
-#include <axp152.h>
-#endif
-#ifdef CONFIG_AXP209_POWER
-#include <axp209.h>
-#endif
-#ifdef CONFIG_AXP221_POWER
-#include <axp221.h>
-#endif
+#include <axp_pmic.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/cpu.h>
 #include <asm/arch/display.h>
@@ -33,6 +25,7 @@
 #include <asm/io.h>
 #include <nand.h>
 #include <net.h>
+#include <sy8106a.h>
 
 #if defined CONFIG_VIDEO_LCD_PANEL_I2C && !(defined CONFIG_SPL_BUILD)
 /* So that we can use pin names in Kconfig and sunxi_name_to_gpio() */
@@ -430,6 +423,12 @@ void i2c_init_board(void)
 	clock_twi_onoff(4, 1);
 #endif
 #endif
+
+#ifdef CONFIG_R_I2C_ENABLE
+	clock_twi_onoff(5, 1);
+	sunxi_gpio_set_cfgpin(SUNXI_GPL(0), SUN8I_H3_GPL_R_TWI);
+	sunxi_gpio_set_cfgpin(SUNXI_GPL(1), SUN8I_H3_GPL_R_TWI);
+#endif
 }
 
 #ifdef CONFIG_SPL_BUILD
@@ -438,40 +437,47 @@ void sunxi_board_init(void)
 	int power_failed = 0;
 	unsigned long ramsize;
 
-#ifdef CONFIG_AXP152_POWER
-	power_failed = axp152_init();
-	power_failed |= axp152_set_dcdc2(1400);
-	power_failed |= axp152_set_dcdc3(1500);
-	power_failed |= axp152_set_dcdc4(1250);
-	power_failed |= axp152_set_ldo2(3000);
-#endif
-#ifdef CONFIG_AXP209_POWER
-	power_failed |= axp209_init();
-	power_failed |= axp209_set_dcdc2(1400);
-	power_failed |= axp209_set_dcdc3(1250);
-	power_failed |= axp209_set_ldo2(3000);
-	power_failed |= axp209_set_ldo3(2800);
-	power_failed |= axp209_set_ldo4(2800);
-#endif
-#ifdef CONFIG_AXP221_POWER
-	power_failed = axp221_init();
-	power_failed |= axp221_set_dcdc1(CONFIG_AXP221_DCDC1_VOLT);
-	power_failed |= axp221_set_dcdc2(CONFIG_AXP221_DCDC2_VOLT);
-	power_failed |= axp221_set_dcdc3(1200); /* VDD-CPU */
-#ifdef CONFIG_MACH_SUN6I
-	power_failed |= axp221_set_dcdc4(1200); /* A31:VDD-SYS */
-#else
-	power_failed |= axp221_set_dcdc4(0);    /* A23:unused */
-#endif
-	power_failed |= axp221_set_dcdc5(1500); /* VCC-DRAM */
-	power_failed |= axp221_set_dldo1(CONFIG_AXP221_DLDO1_VOLT);
-	power_failed |= axp221_set_dldo4(CONFIG_AXP221_DLDO4_VOLT);
-	power_failed |= axp221_set_aldo1(CONFIG_AXP221_ALDO1_VOLT);
-	power_failed |= axp221_set_aldo2(CONFIG_AXP221_ALDO2_VOLT);
-	power_failed |= axp221_set_aldo3(CONFIG_AXP221_ALDO3_VOLT);
-	power_failed |= axp221_set_eldo(3, CONFIG_AXP221_ELDO3_VOLT);
+#ifdef CONFIG_SY8106A_POWER
+	power_failed = sy8106a_set_vout1(CONFIG_SY8106A_VOUT1_VOLT);
 #endif
 
+#if defined CONFIG_AXP152_POWER || defined CONFIG_AXP209_POWER || \
+	defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER
+	power_failed = axp_init();
+
+#if defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER
+	power_failed |= axp_set_dcdc1(CONFIG_AXP_DCDC1_VOLT);
+#endif
+	power_failed |= axp_set_dcdc2(CONFIG_AXP_DCDC2_VOLT);
+	power_failed |= axp_set_dcdc3(CONFIG_AXP_DCDC3_VOLT);
+#if !defined(CONFIG_AXP209_POWER) && !defined(CONFIG_AXP818_POWER)
+	power_failed |= axp_set_dcdc4(CONFIG_AXP_DCDC4_VOLT);
+#endif
+#if defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER
+	power_failed |= axp_set_dcdc5(CONFIG_AXP_DCDC5_VOLT);
+#endif
+
+#if defined CONFIG_AXP221_POWER || defined CONFIG_AXP818_POWER
+	power_failed |= axp_set_aldo1(CONFIG_AXP_ALDO1_VOLT);
+#endif
+	power_failed |= axp_set_aldo2(CONFIG_AXP_ALDO2_VOLT);
+#if !defined(CONFIG_AXP152_POWER)
+	power_failed |= axp_set_aldo3(CONFIG_AXP_ALDO3_VOLT);
+#endif
+#ifdef CONFIG_AXP209_POWER
+	power_failed |= axp_set_aldo4(CONFIG_AXP_ALDO4_VOLT);
+#endif
+
+#if defined(CONFIG_AXP221_POWER) || defined(CONFIG_AXP818_POWER)
+	power_failed |= axp_set_dldo(1, CONFIG_AXP_DLDO1_VOLT);
+	power_failed |= axp_set_dldo(2, CONFIG_AXP_DLDO2_VOLT);
+	power_failed |= axp_set_dldo(3, CONFIG_AXP_DLDO3_VOLT);
+	power_failed |= axp_set_dldo(4, CONFIG_AXP_DLDO4_VOLT);
+	power_failed |= axp_set_eldo(1, CONFIG_AXP_ELDO1_VOLT);
+	power_failed |= axp_set_eldo(2, CONFIG_AXP_ELDO2_VOLT);
+	power_failed |= axp_set_eldo(3, CONFIG_AXP_ELDO3_VOLT);
+#endif
+#endif
 	printf("DRAM:");
 	ramsize = sunxi_dram_init();
 	printf(" %lu MiB\n", ramsize >> 20);

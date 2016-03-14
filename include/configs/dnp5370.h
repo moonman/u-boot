@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for SSV DNP5370 board
+ * U-Boot - Configuration file for SSV DNP5370 board
  */
 
 #ifndef __CONFIG_DNP5370_H__
@@ -94,7 +94,6 @@
 /*
  * Misc Settings
  */
-#define CONFIG_CMD_GPIO
 #define CONFIG_CMD_STRINGS
 #define CONFIG_MISC_INIT_R
 #define CONFIG_RTC_BFIN

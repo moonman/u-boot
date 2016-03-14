@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for BF609 EZ-Kit board
+ * U-Boot - Configuration file for BF609 EZ-Kit board
  */
 
 #ifndef __CONFIG_BF609_EZKIT_H__
@@ -75,7 +75,6 @@
 #define CONFIG_DW_ALTDESCRIPTOR
 #define CONFIG_CMD_MII
 #define CONFIG_MII
-#define CONFIG_PHYLIB
 
 /* i2c Settings */
 #define CONFIG_SYS_I2C

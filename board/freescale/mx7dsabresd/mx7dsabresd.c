@@ -23,6 +23,7 @@
 #include <i2c.h>
 #include <asm/imx-common/mxc_i2c.h>
 #include <asm/arch/crm_regs.h>
+#include <usb.h>
 #include <usb/ehci-fsl.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -41,6 +42,15 @@ DECLARE_GLOBAL_DATA_PTR;
 #define I2C_PAD_CTRL    (PAD_CTL_DSE_3P3V_32OHM | PAD_CTL_SRE_SLOW | \
 	PAD_CTL_HYS | PAD_CTL_PUE | PAD_CTL_PUS_PU100KOHM)
 
+#define LCD_PAD_CTRL    (PAD_CTL_HYS | PAD_CTL_PUS_PU100KOHM | \
+	PAD_CTL_DSE_3P3V_49OHM)
+
+#define QSPI_PAD_CTRL	\
+	(PAD_CTL_DSE_3P3V_49OHM | PAD_CTL_PUE | PAD_CTL_PUS_PU47KOHM)
+
+#define NAND_PAD_CTRL (PAD_CTL_DSE_3P3V_49OHM | PAD_CTL_SRE_SLOW | PAD_CTL_HYS)
+
+#define NAND_PAD_READY0_CTRL (PAD_CTL_DSE_3P3V_49OHM | PAD_CTL_PUS_PU5KOHM)
 #ifdef CONFIG_SYS_I2C_MXC
 #define PC MUX_PAD_CTRL(I2C_PAD_CTRL)
 /* I2C1 for PMIC */
@@ -100,6 +110,14 @@ static iomux_v3_cfg_t const usdhc3_emmc_pads[] = {
 	MX7D_PAD_SD3_STROBE__SD3_STROBE	 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
 
 	MX7D_PAD_SD3_RESET_B__GPIO6_IO11 | MUX_PAD_CTRL(USDHC_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const usb_otg1_pads[] = {
+	MX7D_PAD_GPIO1_IO05__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const usb_otg2_pads[] = {
+	MX7D_PAD_UART3_CTS_B__USB_OTG2_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
 #define IOX_SDI IMX_GPIO_NR(1, 9)
@@ -190,6 +208,95 @@ static void iox74lv_init(void)
 	gpio_direction_output(IOX_STCP, 1);
 };
 
+#ifdef CONFIG_NAND_MXS
+static iomux_v3_cfg_t const gpmi_pads[] = {
+	MX7D_PAD_SD3_DATA0__NAND_DATA00 | MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_DATA1__NAND_DATA01 | MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_DATA2__NAND_DATA02 | MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_DATA3__NAND_DATA03 | MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_DATA4__NAND_DATA04 | MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_DATA5__NAND_DATA05 | MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_DATA6__NAND_DATA06 | MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_DATA7__NAND_DATA07 | MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_CLK__NAND_CLE	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_CMD__NAND_ALE	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_STROBE__NAND_RE_B	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SD3_RESET_B__NAND_WE_B	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SAI1_MCLK__NAND_WP_B	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SAI1_RX_BCLK__NAND_CE3_B	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SAI1_RX_SYNC__NAND_CE2_B	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SAI1_RX_DATA__NAND_CE1_B	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SAI1_TX_BCLK__NAND_CE0_B	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SAI1_TX_SYNC__NAND_DQS	| MUX_PAD_CTRL(NAND_PAD_CTRL),
+	MX7D_PAD_SAI1_TX_DATA__NAND_READY_B	| MUX_PAD_CTRL(NAND_PAD_READY0_CTRL),
+};
+
+static void setup_gpmi_nand(void)
+{
+	imx_iomux_v3_setup_multiple_pads(gpmi_pads, ARRAY_SIZE(gpmi_pads));
+
+	/* NAND_USDHC_BUS_CLK is set in rom */
+	set_clk_nand();
+}
+#endif
+
+#ifdef CONFIG_VIDEO_MXS
+static iomux_v3_cfg_t const lcd_pads[] = {
+	MX7D_PAD_LCD_CLK__LCD_CLK | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_ENABLE__LCD_ENABLE | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_HSYNC__LCD_HSYNC | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_VSYNC__LCD_VSYNC | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA00__LCD_DATA0 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA01__LCD_DATA1 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA02__LCD_DATA2 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA03__LCD_DATA3 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA04__LCD_DATA4 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA05__LCD_DATA5 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA06__LCD_DATA6 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA07__LCD_DATA7 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA08__LCD_DATA8 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA09__LCD_DATA9 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA10__LCD_DATA10 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA11__LCD_DATA11 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA12__LCD_DATA12 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA13__LCD_DATA13 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA14__LCD_DATA14 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA15__LCD_DATA15 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA16__LCD_DATA16 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA17__LCD_DATA17 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA18__LCD_DATA18 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA19__LCD_DATA19 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA20__LCD_DATA20 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA21__LCD_DATA21 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA22__LCD_DATA22 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+	MX7D_PAD_LCD_DATA23__LCD_DATA23 | MUX_PAD_CTRL(LCD_PAD_CTRL),
+
+	MX7D_PAD_LCD_RESET__GPIO3_IO4	| MUX_PAD_CTRL(LCD_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const pwm_pads[] = {
+	/* Use GPIO for Brightness adjustment, duty cycle = period */
+	MX7D_PAD_GPIO1_IO01__GPIO1_IO1 | MUX_PAD_CTRL(NO_PAD_CTRL),
+};
+
+static int setup_lcd(void)
+{
+	imx_iomux_v3_setup_multiple_pads(lcd_pads, ARRAY_SIZE(lcd_pads));
+
+	imx_iomux_v3_setup_multiple_pads(pwm_pads, ARRAY_SIZE(pwm_pads));
+
+	/* Reset LCD */
+	gpio_direction_output(IMX_GPIO_NR(3, 4) , 0);
+	udelay(500);
+	gpio_direction_output(IMX_GPIO_NR(3, 4) , 1);
+
+	/* Set Brightness to high */
+	gpio_direction_output(IMX_GPIO_NR(1, 1) , 1);
+
+	return 0;
+}
+#endif
+
 #ifdef CONFIG_FEC_MXC
 static iomux_v3_cfg_t const fec1_pads[] = {
 	MX7D_PAD_ENET1_RGMII_RX_CTL__ENET1_RGMII_RX_CTL | MUX_PAD_CTRL(ENET_RX_PAD_CTRL),
@@ -230,22 +337,12 @@ static struct fsl_esdhc_cfg usdhc_cfg[3] = {
 	{USDHC3_BASE_ADDR},
 };
 
-static int mmc_get_env_devno(void)
+int board_mmc_get_env_dev(int devno)
 {
-	struct bootrom_sw_info **p =
-		(struct bootrom_sw_info **)ROM_SW_INFO_ADDR;
+	if (devno == 2)
+		devno--;
 
-	u8 boot_type = (*p)->boot_dev_type;
-	u8 dev_no = (*p)->boot_dev_instance;
-
-	/* If not boot from sd/mmc, use default value */
-	if ((boot_type != BOOT_TYPE_SD) && (boot_type != BOOT_TYPE_MMC))
-		return CONFIG_SYS_MMC_ENV_DEV;
-
-	if (dev_no == 2)
-		dev_no--;
-
-	return dev_no;
+	return devno;
 }
 
 static int mmc_map_to_kernel_blk(int dev_no)
@@ -278,7 +375,7 @@ int board_mmc_init(bd_t *bis)
 	int i, ret;
 	/*
 	 * According to the board_mmc_init() the following map is done:
-	 * (U-boot device node)    (Physical Port)
+	 * (U-Boot device node)    (Physical Port)
 	 * mmc0                    USDHC1
 	 * mmc2                    USDHC3 (eMMC)
 	 */
@@ -334,7 +431,7 @@ static void mmc_late_init(void)
 {
 	char cmd[32];
 	char mmcblk[32];
-	u32 dev_no = mmc_get_env_devno();
+	u32 dev_no = mmc_get_env_dev();
 
 	if (!check_mmc_autodetect())
 		return;
@@ -395,11 +492,38 @@ int board_phy_config(struct phy_device *phydev)
 }
 #endif
 
+#ifdef CONFIG_FSL_QSPI
+static iomux_v3_cfg_t const quadspi_pads[] = {
+	MX7D_PAD_EPDC_DATA00__QSPI_A_DATA0 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA01__QSPI_A_DATA1 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA02__QSPI_A_DATA2 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA03__QSPI_A_DATA3 | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA05__QSPI_A_SCLK  | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+	MX7D_PAD_EPDC_DATA06__QSPI_A_SS0_B | MUX_PAD_CTRL(QSPI_PAD_CTRL),
+};
+
+int board_qspi_init(void)
+{
+	/* Set the iomux */
+	imx_iomux_v3_setup_multiple_pads(quadspi_pads,
+					 ARRAY_SIZE(quadspi_pads));
+
+	/* Set the clock */
+	set_clk_qspi();
+
+	return 0;
+}
+#endif
+
 int board_early_init_f(void)
 {
 	setup_iomux_uart();
 
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0x7f, &i2c_pad_info1);
+	imx_iomux_v3_setup_multiple_pads(usb_otg1_pads,
+					 ARRAY_SIZE(usb_otg1_pads));
+	imx_iomux_v3_setup_multiple_pads(usb_otg2_pads,
+					 ARRAY_SIZE(usb_otg2_pads));
 
 	return 0;
 }
@@ -415,6 +539,18 @@ int board_init(void)
 
 #ifdef CONFIG_FEC_MXC
 	setup_fec();
+#endif
+
+#ifdef CONFIG_NAND_MXS
+	setup_gpmi_nand();
+#endif
+
+#ifdef CONFIG_VIDEO_MXS
+	setup_lcd();
+#endif
+
+#ifdef CONFIG_FSL_QSPI
+	board_qspi_init();
 #endif
 
 	return 0;
@@ -479,29 +615,11 @@ int checkboard(void)
 }
 
 #ifdef CONFIG_USB_EHCI_MX7
-static iomux_v3_cfg_t const usb_otg1_pads[] = {
-	MX7D_PAD_GPIO1_IO05__USB_OTG1_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
-};
-
-static iomux_v3_cfg_t const usb_otg2_pads[] = {
-	MX7D_PAD_UART3_CTS_B__USB_OTG2_PWR | MUX_PAD_CTRL(NO_PAD_CTRL),
-};
-
-int board_ehci_hcd_init(int port)
+int board_usb_phy_mode(int port)
 {
-	switch (port) {
-	case 0:
-		imx_iomux_v3_setup_multiple_pads(usb_otg1_pads,
-						 ARRAY_SIZE(usb_otg1_pads));
-		break;
-	case 1:
-		imx_iomux_v3_setup_multiple_pads(usb_otg2_pads,
-						 ARRAY_SIZE(usb_otg2_pads));
-		break;
-	default:
-		printf("MXC USB port %d not yet supported\n", port);
-		return -EINVAL;
-	}
-	return 0;
+	if (port == 0)
+		return USB_INIT_DEVICE;
+	else
+		return USB_INIT_HOST;
 }
 #endif

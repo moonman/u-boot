@@ -32,6 +32,7 @@
 
 #define CONFIG_SKIP_LOWLEVEL_INIT	/* SDRAM is initialized by the bootstrap code */
 
+#define CONFIG_SYS_TEXT_BASE		0x87000000
 #define CONFIG_SYS_MONITOR_BASE		CONFIG_SYS_TEXT_BASE
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)
 #define CONFIG_SYS_MALLOC_LEN		(1 << 20)
@@ -54,7 +55,6 @@
 #endif
 
 #define CONFIG_SYS_NS16550_SERIAL
-#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_REG_SIZE	-4
 #define CONFIG_SYS_NS16550_COM1		UART_1_BASE
 #define CONFIG_CONS_INDEX		1
@@ -84,7 +84,6 @@
  * Commands
  */
 #define CONFIG_CMD_DHCP
-#define CONFIG_CMD_ELF
 #define CONFIG_CMD_EEPROM
 #define CONFIG_CMD_I2C
 
@@ -288,7 +287,6 @@ int vct_gpio_get(int pin);
 #undef CONFIG_CMD_DHCP
 #undef CONFIG_CMD_EEPROM
 #undef CONFIG_CMD_EEPROM
-#undef CONFIG_CMD_ELF
 #undef CONFIG_CMD_FAT
 #undef CONFIG_CMD_I2C
 #undef CONFIG_CMD_I2C

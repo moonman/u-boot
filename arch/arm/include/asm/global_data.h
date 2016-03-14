@@ -38,6 +38,9 @@ struct arch_global_data {
 	unsigned long long timer_reset_value;
 #if !(defined(CONFIG_SYS_ICACHE_OFF) && defined(CONFIG_SYS_DCACHE_OFF))
 	unsigned long tlb_addr;
+#if defined(CONFIG_SYS_FULL_VA)
+	unsigned long pmd_addr[CONFIG_SYS_PTL1_ENTRIES];
+#endif
 	unsigned long tlb_size;
 #endif
 
@@ -46,7 +49,7 @@ struct arch_global_data {
 	u32 omap_boot_mode;
 	u8 omap_ch_flags;
 #endif
-#ifdef CONFIG_FSL_LSCH3
+#if defined(CONFIG_FSL_LSCH3) && defined(CONFIG_SYS_FSL_HAS_DP_DDR)
 	unsigned long mem2_clk;
 #endif
 };

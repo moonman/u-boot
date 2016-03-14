@@ -248,8 +248,9 @@ struct lmb;
 #define IH_TYPE_RKIMAGE		23	/* Rockchip Boot Image		*/
 #define IH_TYPE_RKSD		24	/* Rockchip SD card		*/
 #define IH_TYPE_RKSPI		25	/* Rockchip SPI image		*/
+#define IH_TYPE_ZYNQIMAGE	26	/* Xilinx Zynq Boot Image */
 
-#define IH_TYPE_COUNT		26	/* Number of image types */
+#define IH_TYPE_COUNT		27	/* Number of image types */
 
 /*
  * Compression Types
@@ -817,10 +818,7 @@ static inline ulong fit_get_size(const void *fit)
  * returns:
  *     end address of the FIT image (blob) in memory
  */
-static inline ulong fit_get_end(const void *fit)
-{
-	return (ulong)fit + fdt_totalsize(fit);
-}
+ulong fit_get_end(const void *fit);
 
 /**
  * fit_get_name - get FIT node name

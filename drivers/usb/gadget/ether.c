@@ -9,6 +9,7 @@
  */
 
 #include <common.h>
+#include <console.h>
 #include <asm/errno.h>
 #include <linux/netdevice.h>
 #include <linux/usb/ch9.h>
@@ -255,7 +256,7 @@ static inline int BITRATE(struct usb_gadget *g)
 #if defined(CONFIG_USBNET_MANUFACTURER)
 static char *iManufacturer = CONFIG_USBNET_MANUFACTURER;
 #else
-static char *iManufacturer = "U-boot";
+static char *iManufacturer = "U-Boot";
 #endif
 
 /* These probably need to be configurable. */

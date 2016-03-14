@@ -11,41 +11,27 @@
 #define _SPI_H_
 
 /* SPI mode flags */
-#define	SPI_CPHA	0x01			/* clock phase */
-#define	SPI_CPOL	0x02			/* clock polarity */
-#define	SPI_MODE_0	(0|0)			/* (original MicroWire) */
-#define	SPI_MODE_1	(0|SPI_CPHA)
-#define	SPI_MODE_2	(SPI_CPOL|0)
-#define	SPI_MODE_3	(SPI_CPOL|SPI_CPHA)
-#define	SPI_CS_HIGH	0x04			/* CS active high */
-#define	SPI_LSB_FIRST	0x08			/* per-word bits-on-wire */
-#define	SPI_3WIRE	0x10			/* SI/SO signals shared */
-#define	SPI_LOOP	0x20			/* loopback mode */
-#define	SPI_SLAVE	0x40			/* slave mode */
-#define	SPI_PREAMBLE	0x80			/* Skip preamble bytes */
+#define SPI_CPHA	BIT(0)			/* clock phase */
+#define SPI_CPOL	BIT(1)			/* clock polarity */
+#define SPI_MODE_0	(0|0)			/* (original MicroWire) */
+#define SPI_MODE_1	(0|SPI_CPHA)
+#define SPI_MODE_2	(SPI_CPOL|0)
+#define SPI_MODE_3	(SPI_CPOL|SPI_CPHA)
+#define SPI_CS_HIGH	BIT(2)			/* CS active high */
+#define SPI_LSB_FIRST	BIT(3)			/* per-word bits-on-wire */
+#define SPI_3WIRE	BIT(4)			/* SI/SO signals shared */
+#define SPI_LOOP	BIT(5)			/* loopback mode */
+#define SPI_SLAVE	BIT(6)			/* slave mode */
+#define SPI_PREAMBLE	BIT(7)			/* Skip preamble bytes */
+#define SPI_TX_BYTE	BIT(8)			/* transmit with 1 wire byte */
+#define SPI_TX_DUAL	BIT(9)			/* transmit with 2 wires */
+#define SPI_TX_QUAD	BIT(10)			/* transmit with 4 wires */
 
-/* SPI transfer flags */
-#define SPI_XFER_BEGIN		0x01	/* Assert CS before transfer */
-#define SPI_XFER_END		0x02	/* Deassert CS after transfer */
-#define SPI_XFER_MMAP		0x08	/* Memory Mapped start */
-#define SPI_XFER_MMAP_END	0x10	/* Memory Mapped End */
-#define SPI_XFER_ONCE		(SPI_XFER_BEGIN | SPI_XFER_END)
-#define SPI_XFER_U_PAGE	(1 << 5)
-
-/* SPI TX operation modes */
-#define SPI_OPM_TX_QPP		(1 << 0)
-#define SPI_OPM_TX_BP		(1 << 1)
-
-/* SPI RX operation modes */
-#define SPI_OPM_RX_AS		(1 << 0)
-#define SPI_OPM_RX_AF		(1 << 1)
-#define SPI_OPM_RX_DOUT		(1 << 2)
-#define SPI_OPM_RX_DIO		(1 << 3)
-#define SPI_OPM_RX_QOF		(1 << 4)
-#define SPI_OPM_RX_QIOF		(1 << 5)
-#define SPI_OPM_RX_EXTN	(SPI_OPM_RX_AS | SPI_OPM_RX_AF | SPI_OPM_RX_DOUT | \
-				SPI_OPM_RX_DIO | SPI_OPM_RX_QOF | \
-				SPI_OPM_RX_QIOF)
+/* SPI mode_rx flags */
+#define SPI_RX_SLOW	BIT(0)			/* receive with 1 wire slow */
+#define SPI_RX_FAST	BIT(1)			/* receive with 1 wire fast */
+#define SPI_RX_DUAL	BIT(2)			/* receive with 2 wires */
+#define SPI_RX_QUAD	BIT(3)			/* receive with 4 wires */
 
 /* SPI bus connection options - see enum spi_dual_flash */
 #define SPI_CONN_DUAL_SHARED		(1 << 0)
@@ -75,11 +61,13 @@ struct dm_spi_bus {
  * @cs:		Chip select number (0..n-1)
  * @max_hz:	Maximum bus speed that this slave can tolerate
  * @mode:	SPI mode to use for this device (see SPI mode flags)
+ * @mode_rx:	SPI RX mode to use for this slave (see SPI mode_rx flags)
  */
 struct dm_spi_slave_platdata {
 	unsigned int cs;
 	uint max_hz;
 	uint mode;
+	u8 mode_rx;
 };
 
 #endif /* CONFIG_DM_SPI */
@@ -88,7 +76,7 @@ struct dm_spi_slave_platdata {
  * struct spi_slave - Representation of a SPI slave
  *
  * For driver model this is the per-child data used by the SPI bus. It can
- * be accessed using dev_get_parentdata() on the slave device. The SPI uclass
+ * be accessed using dev_get_parent_priv() on the slave device. The SPI uclass
  * sets uip per_child_auto_alloc_size to sizeof(struct spi_slave), and the
  * driver should not override it. Two platform data fields (max_hz and mode)
  * are copied into this structure to provide an initial value. This allows
@@ -99,15 +87,14 @@ struct dm_spi_slave_platdata {
  *
  * @dev:		SPI slave device
  * @max_hz:		Maximum speed for this slave
- * @mode:		SPI mode to use for this slave (see SPI mode flags)
  * @speed:		Current bus speed. This is 0 until the bus is first
  *			claimed.
  * @bus:		ID of the bus that the slave is attached to. For
  *			driver model this is the sequence number of the SPI
  *			bus (bus->seq) so does not need to be stored
  * @cs:			ID of the chip select connected to the slave.
- * @op_mode_rx:		SPI RX operation mode.
- * @op_mode_tx:		SPI TX operation mode.
+ * @mode:		SPI mode to use for this slave (see SPI mode flags)
+ * @mode_rx:		SPI RX mode to use for this slave (see SPI mode_rx flags)
  * @wordlen:		Size of SPI word in number of bits
  * @max_write_size:	If non-zero, the maximum number of bytes which can
  *			be written at once, excluding command bytes.
@@ -120,18 +107,24 @@ struct spi_slave {
 	struct udevice *dev;	/* struct spi_slave is dev->parentdata */
 	uint max_hz;
 	uint speed;
-	uint mode;
 #else
 	unsigned int bus;
 	unsigned int cs;
 #endif
-	u8 op_mode_rx;
-	u8 op_mode_tx;
+	uint mode;
+	u8 mode_rx;
 	unsigned int wordlen;
 	unsigned int max_write_size;
 	void *memory_map;
 	u8 option;
+
 	u8 flags;
+#define SPI_XFER_BEGIN		BIT(0)	/* Assert CS before transfer */
+#define SPI_XFER_END		BIT(1)	/* Deassert CS after transfer */
+#define SPI_XFER_ONCE		(SPI_XFER_BEGIN | SPI_XFER_END)
+#define SPI_XFER_MMAP		BIT(2)	/* Memory Mapped start */
+#define SPI_XFER_MMAP_END	BIT(3)	/* Memory Mapped End */
+#define SPI_XFER_U_PAGE		BIT(4)
 };
 
 /**

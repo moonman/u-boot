@@ -20,8 +20,7 @@
 	};
 
 	chosen {
-		bootargs = "console=ttyS0,115200";
-		stdout-path = &serial0;
+		stdout-path = "serial0:115200n8";
 	};
 
 	aliases {
@@ -55,6 +54,14 @@
 	status = "okay";
 };
 
+&sd {
+	status = "okay";
+};
+
+&sd1 {
+	status = "okay";
+};
+
 &usb0 {
 	status = "okay";
 };
@@ -67,7 +74,7 @@
 	status = "okay";
 };
 
-/* for U-boot only */
+/* for U-Boot only */
 / {
 	soc {
 		u-boot,dm-pre-reloc;

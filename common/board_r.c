@@ -15,6 +15,8 @@
 #if defined(CONFIG_CMD_BEDBUG)
 #include <bedbug/type.h>
 #endif
+#include <command.h>
+#include <console.h>
 #ifdef CONFIG_HAS_DATAFLASH
 #include <dataflash.h>
 #endif
@@ -44,8 +46,12 @@
 #include <serial.h>
 #include <spi.h>
 #include <stdio_dev.h>
+#include <timer.h>
 #include <trace.h>
 #include <watchdog.h>
+#ifdef CONFIG_CMD_AMBAPP
+#include <ambapp.h>
+#endif
 #ifdef CONFIG_ADDR_MAP
 #include <asm/mmu.h>
 #endif
@@ -61,6 +67,10 @@
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#if defined(CONFIG_SPARC)
+extern int prom_init(void);
+#endif
 
 ulong monitor_flash_len;
 
@@ -105,7 +115,6 @@ static int initr_reloc(void)
 {
 	/* tell others: relocation done */
 	gd->flags |= GD_FLG_RELOC | GD_FLG_FULL_MALLOC_INIT;
-	bootstage_mark_name(BOOTSTAGE_ID_START_UBOOT_R, "board_init_r");
 
 	return 0;
 }
@@ -161,6 +170,14 @@ static int initr_reloc_global_data(void)
 	 */
 	gd->env_addr += gd->relocaddr - CONFIG_SYS_MONITOR_BASE;
 #endif
+#ifdef CONFIG_OF_EMBED
+	/*
+	* The fdt_blob needs to be moved to new relocation address
+	* incase of FDT blob is embedded with in image
+	*/
+	gd->fdt_blob += gd->reloc_off;
+#endif
+
 	return 0;
 }
 
@@ -276,6 +293,15 @@ static int initr_malloc(void)
 	return 0;
 }
 
+static int initr_console_record(void)
+{
+#if defined(CONFIG_CONSOLE_RECORD)
+	return console_record_init();
+#else
+	return 0;
+#endif
+}
+
 #ifdef CONFIG_SYS_NONCACHED_MEMORY
 static int initr_noncached(void)
 {
@@ -287,12 +313,32 @@ static int initr_noncached(void)
 #ifdef CONFIG_DM
 static int initr_dm(void)
 {
+	int ret;
+
 	/* Save the pre-reloc driver model and start a new one */
 	gd->dm_root_f = gd->dm_root;
 	gd->dm_root = NULL;
-	return dm_init_and_scan(false);
+	ret = dm_init_and_scan(false);
+	if (ret)
+		return ret;
+#ifdef CONFIG_TIMER_EARLY
+	gd->timer = NULL;
+	ret = dm_timer_init();
+	if (ret)
+		return ret;
+#endif
+
+	return 0;
 }
 #endif
+
+static int initr_bootstage(void)
+{
+	/* We cannot do this before initr_dm() */
+	bootstage_mark_name(BOOTSTAGE_ID_START_UBOOT_R, "board_init_r");
+
+	return 0;
+}
 
 __weak int power_init_board(void)
 {
@@ -420,7 +466,7 @@ static int initr_dataflash(void)
 /*
  * Tell if it's OK to load the environment early in boot.
  *
- * If CONFIG_OF_CONFIG is defined, we'll check with the FDT to see
+ * If CONFIG_OF_CONTROL is defined, we'll check with the FDT to see
  * if this is OK (defaulting to saying it's OK).
  *
  * NOTE: Loading the environment early can be a bad idea if security is
@@ -446,6 +492,9 @@ static int initr_env(void)
 		env_relocate();
 	else
 		set_default_env(NULL);
+#ifdef CONFIG_OF_CONTROL
+	setenv_addr("fdtcontroladdr", gd->fdt_blob);
+#endif
 
 	/* Initialize from environment */
 	load_addr = getenv_ulong("loadaddr", 16, load_addr);
@@ -541,10 +590,25 @@ static int initr_kgdb(void)
 }
 #endif
 
-#if defined(CONFIG_STATUS_LED) && defined(STATUS_LED_BOOT)
+#if defined(CONFIG_STATUS_LED)
 static int initr_status_led(void)
 {
+#if defined(STATUS_LED_BOOT)
 	status_led_set(STATUS_LED_BOOT, STATUS_LED_BLINKING);
+#else
+	status_led_init();
+#endif
+	return 0;
+}
+#endif
+
+#if defined(CONFIG_CMD_AMBAPP) && defined(CONFIG_SYS_AMBAPP_PRINT_ON_STARTUP)
+extern int do_ambapp_print(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[]);
+
+static int initr_ambapp_print(void)
+{
+	puts("AMBA:\n");
+	do_ambapp_print(NULL, 0, 0, NULL);
 
 	return 0;
 }
@@ -706,6 +770,7 @@ init_fnc_t init_sequence_r[] = {
 #endif
 	initr_barrier,
 	initr_malloc,
+	initr_console_record,
 #ifdef CONFIG_SYS_NONCACHED_MEMORY
 	initr_noncached,
 #endif
@@ -713,6 +778,7 @@ init_fnc_t init_sequence_r[] = {
 #ifdef CONFIG_DM
 	initr_dm,
 #endif
+	initr_bootstage,
 #if defined(CONFIG_ARM) || defined(CONFIG_NDS32)
 	board_init,	/* Setup chipselects */
 #endif
@@ -770,7 +836,8 @@ init_fnc_t init_sequence_r[] = {
 	initr_flash,
 #endif
 	INIT_FUNC_WATCHDOG_RESET
-#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_X86)
+#if defined(CONFIG_PPC) || defined(CONFIG_M68K) || defined(CONFIG_X86) || \
+	defined(CONFIG_SPARC)
 	/* initialize higher level parts of CPU like time base and timers */
 	cpu_init_r,
 #endif
@@ -828,11 +895,10 @@ init_fnc_t init_sequence_r[] = {
 #if defined(CONFIG_ARM) || defined(CONFIG_AVR32)
 	initr_enable_interrupts,
 #endif
-#if defined(CONFIG_X86) || defined(CONFIG_MICROBLAZE) || defined(CONFIG_AVR32) \
-	|| defined(CONFIG_M68K)
+#if defined(CONFIG_MICROBLAZE) || defined(CONFIG_AVR32) || defined(CONFIG_M68K)
 	timer_init,		/* initialize timer */
 #endif
-#if defined(CONFIG_STATUS_LED) && defined(STATUS_LED_BOOT)
+#if defined(CONFIG_STATUS_LED)
 	initr_status_led,
 #endif
 	/* PPC has a udelay(20) here dating from 2002. Why? */
@@ -841,6 +907,12 @@ init_fnc_t init_sequence_r[] = {
 #endif
 #ifdef CONFIG_BOARD_LATE_INIT
 	board_late_init,
+#endif
+#if defined(CONFIG_CMD_AMBAPP)
+	ambapp_init_reloc,
+#if defined(CONFIG_SYS_AMBAPP_PRINT_ON_STARTUP)
+	initr_ambapp_print,
+#endif
 #endif
 #ifdef CONFIG_CMD_SCSI
 	INIT_FUNC_WATCHDOG_RESET
@@ -884,6 +956,9 @@ init_fnc_t init_sequence_r[] = {
 #endif
 #ifdef CONFIG_PS2KBD
 	initr_kbd,
+#endif
+#if defined(CONFIG_SPARC)
+	prom_init,
 #endif
 	run_main_loop,
 };

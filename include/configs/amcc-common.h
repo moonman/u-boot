@@ -10,7 +10,6 @@
 #ifndef __AMCC_COMMON_H
 #define __AMCC_COMMON_H
 
-#define CONFIG_SYS_GENERIC_BOARD
 
 #define CONFIG_SYS_SDRAM_BASE		0x00000000	/* _must_ be 0		*/
 #define CONFIG_SYS_MONITOR_BASE	CONFIG_SYS_TEXT_BASE	/* Start of U-Boot	*/
@@ -20,7 +19,6 @@
 /*
  * UART
  */
-#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #ifndef CONFIG_DM_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	1
@@ -60,7 +58,6 @@
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_DIAG
 #define CONFIG_CMD_EEPROM
-#define CONFIG_CMD_ELF
 #define CONFIG_CMD_GREPENV
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_IRQ
@@ -72,7 +69,6 @@
  * Miscellaneous configurable options
  */
 #define CONFIG_BOOTDELAY	5	/* autoboot after 5 seconds	*/
-#define CONFIG_SYS_LONGHELP			/* undef to save memory		*/
 #if defined(CONFIG_CMD_KGDB)
 #define CONFIG_SYS_CBSIZE		1024	/* Console I/O Buffer Size	*/
 #else

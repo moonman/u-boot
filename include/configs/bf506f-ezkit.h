@@ -1,5 +1,5 @@
 /*
- * U-boot - Configuration file for BF506F EZ-Kit board
+ * U-Boot - Configuration file for BF506F EZ-Kit board
  */
 
 #ifndef __CONFIG_BF506F_EZKIT_H__
@@ -73,7 +73,6 @@
 #define CONFIG_ENV_SPI_MAX_HZ	30000000
 #define CONFIG_SF_DEFAULT_SPEED	30000000
 /*
-#define CONFIG_SPI_FLASH_STMICRO
 #define CONFIG_CMD_SF
 #define CONFIG_CMD_SPI
 */

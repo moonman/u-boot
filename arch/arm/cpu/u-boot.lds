@@ -14,6 +14,24 @@ OUTPUT_ARCH(arm)
 ENTRY(_start)
 SECTIONS
 {
+#if defined(CONFIG_ARMV7_SECURE_BASE) && defined(CONFIG_ARMV7_NONSEC)
+	/*
+	 * If CONFIG_ARMV7_SECURE_BASE is true, secure code will not
+	 * bundle with u-boot, and code offsets are fixed. Secure zone
+	 * only needs to be copied from the loading address to
+	 * CONFIG_ARMV7_SECURE_BASE, which is the linking and running
+	 * address for secure code.
+	 *
+	 * If CONFIG_ARMV7_SECURE_BASE is undefined, the secure zone will
+	 * be included in u-boot address space, and some absolute address
+	 * were used in secure code. The absolute addresses of the secure
+	 * code also needs to be relocated along with the accompanying u-boot
+	 * code.
+	 *
+	 * So DISCARD is only for CONFIG_ARMV7_SECURE_BASE.
+	 */
+	/DISCARD/ : { *(.rel._secure*) }
+#endif
 	. = 0x00000000;
 
 	. = ALIGN(4);

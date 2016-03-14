@@ -12,6 +12,7 @@
 #ifndef __CONFIG_KWB_H__
 #define __CONFIG_KWB_H__
 
+#include <configs/bur_cfg_common.h>
 #include <configs/bur_am335x_common.h>
 /* ------------------------------------------------------------------------- */
 #define CONFIG_AM335X_LCD
@@ -26,6 +27,9 @@
 #define CONFIG_CMD_BMP
 #define CONFIG_BMP_24BMP
 #define CONFIG_BMP_32BPP
+
+/* memory */
+#define CONFIG_SYS_MALLOC_LEN		(5 * 1024 * 1024)
 
 /* Clock Defines */
 #define V_OSCK				26000000  /* Clock output from T2 */
@@ -57,6 +61,8 @@
 #ifndef CONFIG_SPL_BUILD
 #define CONFIG_EXTRA_ENV_SETTINGS \
 BUR_COMMON_ENV \
+"bootaddr=0x80001100\0" \
+"bootdev=cpsw(0,0)\0" \
 "vx_romfsbase=0x800E0000\0" \
 "vx_romfssize=0x20000\0" \
 "vx_memtop=0x8FBEF000\0" \
@@ -66,7 +72,7 @@ BUR_COMMON_ENV \
 "logoaddr=0x82000000\0" \
 "defaultARlen=0x8000\0" \
 "loaddefaultAR=mmc read ${loadaddr} 800 ${defaultARlen}\0" \
-"defaultAR=run loadromfs; run loaddefaultAR; go ${loadaddr}\0" \
+"defaultAR=run loadromfs; run loaddefaultAR; bootvx ${loadaddr}\0" \
 "logo0=fatload mmc 0:1 ${logoaddr} SYSTEM/ADDON/Bootlogo/Bootlogo.bmp.gz && " \
 	"bmp display ${logoaddr} 0 0\0" \
 "logo1=fatload mmc 0:1 ${logoaddr} SYSTEM/BASE/Bootlogo/Bootlogo.bmp.gz && " \
@@ -74,11 +80,11 @@ BUR_COMMON_ENV \
 "mmcboot=echo booting AR from eMMC-flash ...; "\
 	"run logo0 || run logo1; " \
 	"run loadromfs; " \
-	"fatload mmc 0:1 ${loadaddr} arimg && go ${loadaddr}; " \
+	"fatload mmc 0:1 ${loadaddr} arimg && bootvx ${loadaddr}; " \
 	"run defaultAR;\0" \
 "netboot=echo booting AR from network ...; " \
 	"run loadromfs; " \
-	"tftp ${loadaddr} arimg && go ${loadaddr}; " \
+	"tftp ${loadaddr} arimg && bootvx ${loadaddr}; " \
 	"puts 'networkboot failed!';\0" \
 "netscript=echo running script from network (tftp) ...; " \
 	"tftp 0x80000000 netscript.img && source; " \
@@ -101,10 +107,9 @@ BUR_COMMON_ENV \
 #define CONFIG_BOOTDELAY		0
 
 /* undefine command which we not need here */
-#undef	CONFIG_BOOTM_NETBSD
-#undef	CONFIG_BOOTM_PLAN9
-#undef	CONFIG_BOOTM_RTEMS
-#undef CONFIG_CMD_CRC32
+#undef CONFIG_BOOTM_NETBSD
+#undef CONFIG_BOOTM_PLAN9
+#undef CONFIG_BOOTM_RTEMS
 
 /* Support both device trees and ATAGs. */
 #define CONFIG_OF_LIBFDT
@@ -120,16 +125,10 @@ BUR_COMMON_ENV \
 #define CONFIG_USB_MUSB_DISABLE_BULK_COMBINE_SPLIT
 /* attention! not only for gadget, enables also highspeed in hostmode */
 #define CONFIG_USB_GADGET_DUALSPEED
-#define CONFIG_USB_MUSB_HOST
 #define CONFIG_AM335X_USB0
 #define CONFIG_AM335X_USB0_MODE	MUSB_HOST
 #define CONFIG_AM335X_USB1
 #define CONFIG_AM335X_USB1_MODE	MUSB_HOST
-
-#ifdef CONFIG_USB_MUSB_HOST
-#define CONFIG_CMD_USB
-#define CONFIG_USB_STORAGE
-#endif /* CONFIG_USB_MUSB_HOST */
 
 #undef CONFIG_ENV_IS_NOWHERE
 #define CONFIG_ENV_IS_IN_MMC
@@ -149,4 +148,4 @@ BUR_COMMON_ENV \
 #define CONFIG_CMD_FS_GENERIC
 #endif /* CONFIG_MMC, ... */
 
-#endif	/* ! __CONFIG_TSERIES_H__ */
+#endif	/* __CONFIG_KWB_H__ */

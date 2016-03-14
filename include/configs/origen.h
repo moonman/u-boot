@@ -51,7 +51,6 @@
 #define S5P_CHECK_LPA			0xABAD0000
 
 #undef CONFIG_CMD_PING
-#define CONFIG_CMD_ELF
 #define CONFIG_CMD_DHCP
 #define CONFIG_CMD_EXT2
 #define CONFIG_CMD_FS_GENERIC
@@ -112,7 +111,7 @@
 
 #define CONFIG_SYS_INIT_SP_ADDR		0x02040000
 
-/* U-boot copy size from boot Media to DRAM.*/
+/* U-Boot copy size from boot Media to DRAM.*/
 #define COPY_BL2_SIZE		0x80000
 #define BL2_START_OFFSET	((CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE)/512)
 #define BL2_SIZE_BLOC_COUNT	(COPY_BL2_SIZE/512)

@@ -239,6 +239,33 @@ config FSP_SYS_MALLOC_F_LEN
 	help
 	  Additional size of malloc() pool before relocation.
 
+config FSP_USE_UPD
+	bool
+	depends on HAVE_FSP
+	default y
+	help
+	  Most FSPs use UPD data region for some FSP customization. But there
+	  are still some FSPs that might not even have UPD. For such FSPs,
+	  override this to n in their platform Kconfig files.
+
+config FSP_BROKEN_HOB
+	bool
+	depends on HAVE_FSP
+	help
+	  Indicate some buggy FSPs that does not report memory used by FSP
+	  itself as reserved in the resource descriptor HOB. Select this to
+	  tell U-Boot to do some additional work to ensure U-Boot relocation
+	  do not overwrite the important boot service data which is used by
+	  FSP, otherwise the subsequent call to fsp_notify() will fail.
+
+config ENABLE_MRC_CACHE
+	bool "Enable MRC cache"
+	depends on !EFI && !SYS_COREBOOT
+	help
+	  Enable this feature to cause MRC data to be cached in NV storage
+	  to be used for speeding up boot time on future reboots and/or
+	  power cycles.
+
 config SMP
 	bool "Enable Symmetric Multiprocessing"
 	default n
@@ -270,26 +297,6 @@ config AP_STACK_SIZE
 	  option sets the stack size used by each CPU and directly affects
 	  the memory used by this initialisation process. Typically 4KB is
 	  enough space.
-
-config TSC_CALIBRATION_BYPASS
-	bool "Bypass Time-Stamp Counter (TSC) calibration"
-	default n
-	help
-	  By default U-Boot automatically calibrates Time-Stamp Counter (TSC)
-	  running frequency via Model-Specific Register (MSR) and Programmable
-	  Interval Timer (PIT). If the calibration does not work on your board,
-	  select this option and provide a hardcoded TSC running frequency with
-	  CONFIG_TSC_FREQ_IN_MHZ below.
-
-	  Normally this option should be turned on in a simulation environment
-	  like qemu.
-
-config TSC_FREQ_IN_MHZ
-	int "Time-Stamp Counter (TSC) running frequency in MHz"
-	depends on TSC_CALIBRATION_BYPASS
-	default 1000
-	help
-	  The running frequency in MHz of Time-Stamp Counter (TSC).
 
 config HAVE_VGA_BIOS
 	bool "Add a VGA BIOS image"
@@ -358,6 +365,26 @@ config GENERATE_ACPI_TABLE
 	  by the operating system. It defines platform-independent interfaces
 	  for configuration and power management monitoring.
 
+config QEMU_ACPI_TABLE
+	bool "Load ACPI table from QEMU fw_cfg interface"
+	depends on GENERATE_ACPI_TABLE && QEMU
+	default y
+	help
+	  By default, U-Boot generates its own ACPI tables. This option, if
+	  enabled, disables U-Boot's version and loads ACPI tables generated
+	  by QEMU.
+
+config GENERATE_SMBIOS_TABLE
+	bool "Generate an SMBIOS (System Management BIOS) table"
+	default y
+	help
+	  The System Management BIOS (SMBIOS) specification addresses how
+	  motherboard and system vendors present management information about
+	  their products in a standard format by extending the BIOS interface
+	  on Intel architecture systems.
+
+	  Check http://www.dmtf.org/standards/smbios for details.
+
 endmenu
 
 config MAX_PIRQ_LINKS
@@ -400,6 +427,27 @@ config PCIE_ECAM_SIZE
 	  Mechanism (ECAM) with PCI Express. Each bus consumes 1 MiB memory,
 	  so a default 0x10000000 size covers all of the 256 buses which is the
 	  maximum number of PCI buses as defined by the PCI specification.
+
+config I8259_PIC
+	bool
+	default y
+	help
+	  Intel 8259 ISA compatible chipset incorporates two 8259 (master and
+	  slave) interrupt controllers. Include this to have U-Boot set up
+	  the interrupt correctly.
+
+config I8254_TIMER
+	bool
+	default y
+	help
+	  Intel 8254 timer contains three counters which have fixed uses.
+	  Include this to have U-Boot set up the timer correctly.
+
+config I8042_KEYB
+	default y
+
+config DM_KEYBOARD
+	default y
 
 source "arch/x86/lib/efi/Kconfig"
 

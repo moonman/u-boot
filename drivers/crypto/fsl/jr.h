@@ -37,14 +37,13 @@
 #define JQ_ENQ_ERR		-3
 
 struct op_ring {
-	dma_addr_t desc;
+	phys_addr_t desc;
 	uint32_t status;
 } __packed;
 
 struct jr_info {
-	void (*callback)(dma_addr_t desc, uint32_t status, void *arg);
-	dma_addr_t desc_phys_addr;
-	uint32_t desc_addr;
+	void (*callback)(uint32_t status, void *arg);
+	phys_addr_t desc_phys_addr;
 	uint32_t desc_len;
 	uint32_t op_done;
 	void *arg;
@@ -73,6 +72,8 @@ struct jobring {
 	int write_idx;
 	/* Size of the rings. */
 	int size;
+	/* Op ring size aligned to cache line size */
+	int op_size;
 	/* The ip and output rings have to be accessed by SEC. So the
 	 * pointers will ahve to point to the housekeeping region provided
 	 * by SEC

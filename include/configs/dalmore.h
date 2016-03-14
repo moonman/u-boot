@@ -1,17 +1,7 @@
 /*
  * Copyright (c) 2010-2013, NVIDIA CORPORATION.  All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef __CONFIG_H
@@ -49,7 +39,6 @@
 #define MACH_TYPE_DALMORE	4304	/* not yet in mach-types.h */
 
 /* SPI */
-#define CONFIG_SPI_FLASH_WINBOND
 #define CONFIG_SF_DEFAULT_MODE         SPI_MODE_0
 #define CONFIG_SF_DEFAULT_SPEED        24000000
 #define CONFIG_CMD_SPI
@@ -69,6 +58,7 @@
 /* General networking support */
 #define CONFIG_CMD_DHCP
 
+#include "tegra-common-usb-gadget.h"
 #include "tegra-common-post.h"
 
 #endif /* __CONFIG_H */

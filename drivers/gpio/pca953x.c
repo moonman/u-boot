@@ -1,19 +1,7 @@
 /*
  * Copyright 2008 Extreme Engineering Solutions, Inc.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * Version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 /*
@@ -88,8 +76,10 @@ static int pca953x_reg_write(uint8_t chip, uint addr, uint mask, uint data)
 		if (i2c_read(chip, addr << 1, 1, (u8*)&valw, 2))
 			return -1;
 
+		valw = le16_to_cpu(valw);
 		valw &= ~mask;
 		valw |= data;
+		valw = cpu_to_le16(valw);
 
 		return i2c_write(chip, addr << 1, 1, (u8*)&valw, 2);
 	}
@@ -107,7 +97,7 @@ static int pca953x_reg_read(uint8_t chip, uint addr, uint *data)
 	} else {
 		if (i2c_read(chip, addr << 1, 1, (u8*)&valw, 2))
 			return -1;
-		*data = (int)valw;
+		*data = (uint)le16_to_cpu(valw);
 	}
 	return 0;
 }

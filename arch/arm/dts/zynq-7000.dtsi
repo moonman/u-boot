@@ -54,6 +54,7 @@
 	};
 
 	amba: amba {
+		u-boot,dm-pre-reloc;
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -191,6 +192,18 @@
 			#size-cells = <0>;
 		};
 
+		qspi: spi@e000d000 {
+			clock-names = "ref_clk", "pclk";
+			clocks = <&clkc 10>, <&clkc 43>;
+			compatible = "xlnx,zynq-qspi-1.0";
+			status = "disabled";
+			interrupt-parent = <&intc>;
+			interrupts = <0 19 4>;
+			reg = <0xe000d000 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+		};
+
 		gem0: ethernet@e000b000 {
 			compatible = "cdns,zynq-gem", "cdns,gem";
 			reg = <0xe000b000 0x1000>;
@@ -221,7 +234,7 @@
 			interrupt-parent = <&intc>;
 			interrupts = <0 24 4>;
 			reg = <0xe0100000 0x1000>;
-		} ;
+		};
 
 		sdhci1: sdhci@e0101000 {
 			compatible = "arasan,sdhci-8.9a";
@@ -231,7 +244,7 @@
 			interrupt-parent = <&intc>;
 			interrupts = <0 47 4>;
 			reg = <0xe0101000 0x1000>;
-		} ;
+		};
 
 		slcr: slcr@f8000000 {
 			#address-cells = <1>;
@@ -313,11 +326,11 @@
 
 		scutimer: timer@f8f00600 {
 			interrupt-parent = <&intc>;
-			interrupts = < 1 13 0x301 >;
+			interrupts = <1 13 0x301>;
 			compatible = "arm,cortex-a9-twd-timer";
-			reg = < 0xf8f00600 0x20 >;
+			reg = <0xf8f00600 0x20>;
 			clocks = <&clkc 4>;
-		} ;
+		};
 
 		usb0: usb@e0002000 {
 			compatible = "xlnx,zynq-usb-2.20a", "chipidea,usb2";

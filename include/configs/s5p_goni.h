@@ -17,6 +17,8 @@
 #define CONFIG_S5PC110		1	/* which is in a S5PC110 */
 #define CONFIG_MACH_GONI	1	/* working with Goni */
 
+#define CONFIG_SYS_CACHELINE_SIZE	64
+
 #include <linux/sizes.h>
 #include <asm/arch/cpu.h>		/* get chip and board defs */
 
@@ -269,8 +271,8 @@
 
 #define CONFIG_SYS_MAX_I2C_BUS	7
 #define CONFIG_USB_GADGET
-#define CONFIG_USB_GADGET_S3C_UDC_OTG
-#define CONFIG_USB_GADGET_S3C_UDC_OTG_PHY
+#define CONFIG_USB_GADGET_DWC2_OTG
+#define CONFIG_USB_GADGET_DWC2_OTG_PHY
 #define CONFIG_USB_GADGET_DUALSPEED
 #define CONFIG_USB_GADGET_VBUS_DRAW 2
 #define CONFIG_CMD_USB_MASS_STORAGE
@@ -278,6 +280,5 @@
 
 #define CONFIG_OF_LIBFDT
 
-#define CONFIG_SYS_GENERIC_BOARD
 
 #endif	/* __CONFIG_H */

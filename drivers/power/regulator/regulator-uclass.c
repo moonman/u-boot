@@ -138,6 +138,13 @@ int regulator_get_by_devname(const char *devname, struct udevice **devp)
 	return uclass_get_device_by_name(UCLASS_REGULATOR, devname, devp);
 }
 
+int device_get_supply_regulator(struct udevice *dev, const char *supply_name,
+				struct udevice **devp)
+{
+	return uclass_get_device_by_phandle(UCLASS_REGULATOR, dev,
+					    supply_name, devp);
+}
+
 int regulator_autoset(struct udevice *dev)
 {
 	struct dm_regulator_uclass_platdata *uc_pdata;
@@ -171,7 +178,7 @@ static void regulator_show(struct udevice *dev, int ret)
 		printf("; set %d uA", uc_pdata->min_uA);
 	printf("; enabling");
 	if (ret)
-		printf(" (ret: %d)\n", ret);
+		printf(" (ret: %d)", ret);
 	printf("\n");
 }
 
@@ -327,6 +334,8 @@ int regulators_enable_boot_on(bool verbose)
 		}
 		if (verbose)
 			regulator_show(dev, ret);
+		if (ret == -ENOSYS)
+			ret = 0;
 	}
 
 	return ret;

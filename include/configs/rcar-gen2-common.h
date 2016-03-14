@@ -9,6 +9,8 @@
 #ifndef __RCAR_GEN2_COMMON_H
 #define __RCAR_GEN2_COMMON_H
 
+#define CONFIG_SYS_CACHELINE_SIZE 64
+
 #include <asm/arch/rmobile.h>
 
 #define CONFIG_CMD_DFL
@@ -26,7 +28,6 @@
 #define CONFIG_CMD_EXT4_WRITE
 
 #define CONFIG_SYS_THUMB_BUILD
-#define CONFIG_SYS_GENERIC_BOARD
 
 /* Support File sytems */
 #define CONFIG_FAT_WRITE

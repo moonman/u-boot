@@ -5,19 +5,7 @@
  *
  * Copyright (C) 2007 Sergey Kubushyn <ksi@koi8.net>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * SPDX-License-Identifier:	GPL-2.0
  */
 
 #ifndef __CONFIG_H
@@ -93,7 +81,6 @@
 /*
  * Serial Driver info
  */
-#define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
 #define CONFIG_SYS_NS16550_REG_SIZE	-4	/* NS16550 register size */
 #define CONFIG_SYS_NS16550_COM1	DAVINCI_UART2_BASE /* Base address of UART2 */
@@ -103,8 +90,6 @@
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200 }
 
 #define CONFIG_SPI
-#define CONFIG_SPI_FLASH_STMICRO
-#define CONFIG_SPI_FLASH_WINBOND
 #define CONFIG_DAVINCI_SPI
 #define CONFIG_SYS_SPI_BASE		DAVINCI_SPI1_BASE
 #define CONFIG_SYS_SPI_CLK		clk_get(DAVINCI_SPI1_CLKID)
@@ -195,7 +180,6 @@
 /*
  * U-Boot general configuration
  */
-#define CONFIG_SYS_GENERIC_BOARD
 #define CONFIG_MISC_INIT_R
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOOTFILE		"uImage" /* Boot file name */

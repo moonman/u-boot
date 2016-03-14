@@ -158,6 +158,7 @@ static const table_entry_t uimage_type[] = {
 	{	IH_TYPE_RKIMAGE,    "rkimage",    "Rockchip Boot Image" },
 	{	IH_TYPE_RKSD,       "rksd",       "Rockchip SD Boot Image" },
 	{	IH_TYPE_RKSPI,      "rkspi",      "Rockchip SPI Boot Image" },
+	{	IH_TYPE_ZYNQIMAGE,  "zynqimage",  "Xilinx Zynq Boot Image" },
 	{	-1,		    "",		  "",			},
 };
 
@@ -457,24 +458,29 @@ ulong getenv_bootm_low(void)
 
 phys_size_t getenv_bootm_size(void)
 {
-	phys_size_t tmp;
+	phys_size_t tmp, size;
+	phys_addr_t start;
 	char *s = getenv("bootm_size");
 	if (s) {
 		tmp = (phys_size_t)simple_strtoull(s, NULL, 16);
 		return tmp;
 	}
+
+#if defined(CONFIG_ARM) && defined(CONFIG_NR_DRAM_BANKS)
+	start = gd->bd->bi_dram[0].start;
+	size = gd->bd->bi_dram[0].size;
+#else
+	start = gd->bd->bi_memstart;
+	size = gd->bd->bi_memsize;
+#endif
+
 	s = getenv("bootm_low");
 	if (s)
 		tmp = (phys_size_t)simple_strtoull(s, NULL, 16);
 	else
-		tmp = 0;
+		tmp = start;
 
-
-#if defined(CONFIG_ARM) && defined(CONFIG_NR_DRAM_BANKS)
-	return gd->bd->bi_dram[0].size - tmp;
-#else
-	return gd->bd->bi_memsize - tmp;
-#endif
+	return size - (tmp - start);
 }
 
 phys_size_t getenv_bootm_mapsize(void)
@@ -913,7 +919,7 @@ int boot_get_ramdisk(int argc, char * const argv[], bootm_headers_t *images,
 	 * Look for an Android boot image.
 	 */
 	buf = map_sysmem(images->os.start, 0);
-	if (genimg_get_format(buf) == IMAGE_FORMAT_ANDROID)
+	if (buf && genimg_get_format(buf) == IMAGE_FORMAT_ANDROID)
 		select = argv[0];
 #endif
 
@@ -1112,8 +1118,7 @@ int boot_ramdisk_high(struct lmb *lmb, ulong rd_data, ulong rd_len,
 		if (initrd_high == ~0)
 			initrd_copy_to_ram = 0;
 	} else {
-		/* not set, no restrictions to load high */
-		initrd_high = ~0;
+		initrd_high = getenv_bootm_mapsize() + getenv_bootm_low();
 	}
 
 
@@ -1265,7 +1270,7 @@ int boot_get_loadable(int argc, char * const argv[], bootm_headers_t *images,
  * @cmd_end: pointer to a ulong variable, will hold cmdline end
  *
  * boot_get_cmdline() allocates space for kernel command line below
- * BOOTMAPSZ + getenv_bootm_low() address. If "bootargs" U-boot environemnt
+ * BOOTMAPSZ + getenv_bootm_low() address. If "bootargs" U-Boot environemnt
  * variable is present its contents is copied to allocated kernel
  * command line.
  *

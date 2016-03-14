@@ -35,13 +35,12 @@ static int ehci_usb_probe(struct udevice *dev)
 	 * This should go away once we've moved to the driver model for
 	 * clocks resp. phys.
 	 */
-	if (hccr == (void *)SUNXI_USB1_BASE) {
-		priv->ahb_gate_mask = 1 << AHB_GATE_OFFSET_USB_EHCI0;
-		priv->phy_index = 1;
-	} else {
-		priv->ahb_gate_mask = 1 << AHB_GATE_OFFSET_USB_EHCI1;
-		priv->phy_index = 2;
-	}
+	priv->ahb_gate_mask = 1 << AHB_GATE_OFFSET_USB_EHCI0;
+#ifdef CONFIG_MACH_SUN8I_H3
+	priv->ahb_gate_mask |= 1 << AHB_GATE_OFFSET_USB_OHCI0;
+#endif
+	priv->phy_index = ((u32)hccr - SUNXI_USB1_BASE) / 0x1000 + 1;
+	priv->ahb_gate_mask <<= priv->phy_index - 1;
 
 	setbits_le32(&ccm->ahb_gate0, priv->ahb_gate_mask);
 #ifdef CONFIG_SUNXI_GEN_SUN6I
@@ -83,11 +82,12 @@ static const struct udevice_id ehci_usb_ids[] = {
 	{ .compatible = "allwinner,sun6i-a31-ehci", },
 	{ .compatible = "allwinner,sun7i-a20-ehci", },
 	{ .compatible = "allwinner,sun8i-a23-ehci", },
+	{ .compatible = "allwinner,sun8i-h3-ehci",  },
 	{ .compatible = "allwinner,sun9i-a80-ehci", },
 	{ }
 };
 
-U_BOOT_DRIVER(usb_ehci) = {
+U_BOOT_DRIVER(ehci_sunxi) = {
 	.name	= "ehci_sunxi",
 	.id	= UCLASS_USB,
 	.of_match = ehci_usb_ids,
