@@ -30,8 +30,6 @@
 #ifndef _CONFIG_POGOPLUGV4_H
 #define _CONFIG_POGOPLUGV4_H
 
-#define CONFIG_SYS_GENERIC_BOARD
-
 /*
  * Machine type definition and ID
  */
