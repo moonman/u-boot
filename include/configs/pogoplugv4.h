@@ -109,7 +109,7 @@
 	"loadaddr=0x810000\0" \
 	"rdfile=initramfs-linux.img\0" \
 	"fdtaddr=0x800000\0" \
-	"fdtfile=kirkwood-pogoplugv4.dtb\0" \
+	"fdtfile=kirkwood-pogoplug-series-4.dtb\0" \
 	"fdtdir=/boot/dtbs\0" \
 	"optargs=\0" \
 	"mtdparts="CONFIG_MTDPARTS \
