@@ -57,9 +57,7 @@
 #define CONFIG_CMD_DATE
 #define CONFIG_SYS_MVFS         /* Picks up Filesystem from mv-common.h */
 #define CONFIG_CMD_BOOTZ
-#define CONFIG_CMD_SETEXPR
 #define CONFIG_SUPPORT_RAW_INITRD
-#define CONFIG_OF_LIBFDT
 
 /*
  * mv-common.h should be defined after CMD configs since it used them
@@ -67,8 +65,6 @@
  */
 #include "mv-common.h"
 
-#undef CONFIG_SYS_PROMPT	/* previously defined in mv-common.h */
-#define CONFIG_SYS_PROMPT	"GoFlexHome> "	/* Command Prompt */
 #define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 

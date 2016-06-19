@@ -51,19 +51,12 @@
 #define CONFIG_CONSOLE_MUX
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
-#define CONFIG_CMD_DHCP
 #define CONFIG_CMD_ENV
-#define CONFIG_CMD_MII
-#define CONFIG_CMD_MMC
 #define CONFIG_CMD_NAND
-#define CONFIG_CMD_PING
-#define CONFIG_CMD_USB
 #define CONFIG_CMD_IDE
 #define CONFIG_SYS_MVFS /* Picks up Filesystem from mv-common.h */
 #define CONFIG_CMD_BOOTZ
-#define CONFIG_CMD_SETEXPR
 #define CONFIG_SUPPORT_RAW_INITRD
-#define CONFIG_OF_LIBFDT
 
 /*
  * mv-common.h should be defined after CMD configs since it used them
@@ -72,8 +65,7 @@
 #include "mv-common.h"
 
 /* Remove or override few declarations from mv-common.h */
-#undef CONFIG_SYS_PROMPT	/* previously defined in mv-common.h */
-#define CONFIG_SYS_PROMPT	"Pogoplugv4> "
+
 #define CONFIG_SYS_HUSH_PARSER
 #define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 
