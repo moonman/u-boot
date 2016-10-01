@@ -248,15 +248,20 @@ static void boot_prep_linux(bootm_headers_t *images)
 	}
 }
 
+__weak bool armv7_boot_nonsec_default(void)
+{
+#ifdef CONFIG_ARMV7_BOOT_SEC_DEFAULT
+	return false;
+#else
+	return true;
+#endif
+}
+
 #ifdef CONFIG_ARMV7_NONSEC
 bool armv7_boot_nonsec(void)
 {
 	char *s = getenv("bootm_boot_mode");
-#ifdef CONFIG_ARMV7_BOOT_SEC_DEFAULT
-	bool nonsec = false;
-#else
-	bool nonsec = true;
-#endif
+	bool nonsec = armv7_boot_nonsec_default();
 
 	if (s && !strcmp(s, "sec"))
 		nonsec = false;
@@ -358,38 +363,6 @@ int do_bootm_linux(int flag, int argc, char * const argv[],
 	return 0;
 }
 
-#ifdef CONFIG_CMD_BOOTZ
-
-struct zimage_header {
-	uint32_t	code[9];
-	uint32_t	zi_magic;
-	uint32_t	zi_start;
-	uint32_t	zi_end;
-};
-
-#define	LINUX_ARM_ZIMAGE_MAGIC	0x016f2818
-
-int bootz_setup(ulong image, ulong *start, ulong *end)
-{
-	struct zimage_header *zi;
-
-	zi = (struct zimage_header *)map_sysmem(image, 0);
-	if (zi->zi_magic != LINUX_ARM_ZIMAGE_MAGIC) {
-		puts("Bad Linux ARM zImage magic!\n");
-		return 1;
-	}
-
-	*start = zi->zi_start;
-	*end = zi->zi_end;
-
-	printf("Kernel image @ %#08lx [ %#08lx - %#08lx ]\n", image, *start,
-	      *end);
-
-	return 0;
-}
-
-#endif	/* CONFIG_CMD_BOOTZ */
-
 #if defined(CONFIG_BOOTM_VXWORKS)
 void boot_prep_vxworks(bootm_headers_t *images)
 {
@@ -399,8 +372,10 @@ void boot_prep_vxworks(bootm_headers_t *images)
 	if (images->ft_addr) {
 		off = fdt_path_offset(images->ft_addr, "/memory");
 		if (off < 0) {
+#ifdef CONFIG_ARCH_FIXUP_FDT
 			if (arch_fixup_fdt(images->ft_addr))
 				puts("## WARNING: fixup memory failed!\n");
+#endif
 		}
 	}
 #endif

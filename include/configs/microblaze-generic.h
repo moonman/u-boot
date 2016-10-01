@@ -175,10 +175,6 @@
 #define CONFIG_CMD_IRQ
 #define CONFIG_CMD_MFSL
 
-#if defined(CONFIG_DCACHE) || defined(CONFIG_ICACHE)
-#else
-#endif
-
 #if defined(FLASH)
 # define CONFIG_CMD_JFFS2
 # define CONFIG_CMD_UBI
@@ -309,6 +305,7 @@
 					 0x60000)
 #define CONFIG_SYS_FDT_BASE		(CONFIG_SYS_FLASH_BASE + \
 					 0x40000)
+#define CONFIG_SYS_FDT_SIZE		(16<<10)
 #define CONFIG_SYS_SPL_ARGS_ADDR	(CONFIG_SYS_TEXT_BASE + \
 					 0x1000000)
 
