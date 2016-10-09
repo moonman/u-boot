@@ -52,11 +52,9 @@
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
 #define CONFIG_CMD_ENV
-#define CONFIG_CMD_NAND
 #define CONFIG_CMD_IDE
 #define CONFIG_CMD_DATE
 #define CONFIG_SYS_MVFS         /* Picks up Filesystem from mv-common.h */
-#define CONFIG_CMD_BOOTZ
 #define CONFIG_SUPPORT_RAW_INITRD
 
 /*
@@ -64,9 +62,6 @@
  * to enable certain macros
  */
 #include "mv-common.h"
-
-#define CONFIG_SYS_HUSH_PARSER
-#define CONFIG_SYS_PROMPT_HUSH_PS2 "> "
 
 /*
  *  Environment variables configurations
