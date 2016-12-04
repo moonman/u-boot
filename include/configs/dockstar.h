@@ -12,12 +12,6 @@
 #ifndef _CONFIG_DOCKSTAR_H
 #define _CONFIG_DOCKSTAR_H
 
-
-/*
- * Version number information
- */
-#define CONFIG_IDENT_STRING	" Arch Linux ARM\nSeagate FreeAgent DockStar"
-
 /*
  * High Level Configuration Options (easy to change)
  */

@@ -14,11 +14,6 @@
 #define _CONFIG_SHEEVAPLUG_H
 
 /*
- * Version number information
- */
-#define CONFIG_IDENT_STRING	" Arch Linux ARM\nMarvell Sheevaplug"
-
-/*
  * High Level Configuration Options (easy to change)
  */
 #define CONFIG_FEROCEON_88FR131	1	/* CPU Core subversion */
@@ -39,10 +34,15 @@
 #define CONFIG_SUPPORT_RAW_INITRD
 
 /*
- * mv-common.h should be defined after CMD configs since it used them
+ * Standard filesystems
+ */
+#define CONFIG_SYS_MVFS
+
+/*
+ * mv-plug-common.h should be defined after CMD configs since it used them
  * to enable certain macros
  */
-#include "mv-common.h"
+#include "mv-plug-common.h"
 
 /*
  *  Environment variables configurations
@@ -183,8 +183,14 @@
 /*
  * SATA driver configuration
  */
-#ifdef CONFIG_MVSATA_IDE
+#ifdef CONFIG_CMD_IDE
+#define __io
+#define CONFIG_IDE_PREINIT
+#define CONFIG_DOS_PARTITION
+#define CONFIG_MVSATA_IDE_USE_PORT0
+#define CONFIG_MVSATA_IDE_USE_PORT1
 #define CONFIG_SYS_ATA_IDE0_OFFSET	MV_SATA_PORT0_OFFSET
-#endif /*CONFIG_MVSATA_IDE*/
+#define CONFIG_SYS_ATA_IDE1_OFFSET	MV_SATA_PORT1_OFFSET
+#endif /* CONFIG_CMD_IDE */
 
 #endif /* _CONFIG_SHEEVAPLUG_H */

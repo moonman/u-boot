@@ -14,17 +14,10 @@
 #define _CONFIG_GURUPLUG_H
 
 /*
- * Version number information
- */
-#define CONFIG_IDENT_STRING	" Arch Linux ARM\nMarvell GuruPlug"
-
-/*
  * High Level Configuration Options (easy to change)
  */
 #define CONFIG_SHEEVA_88SV131	1	/* CPU Core subversion */
-#define CONFIG_KW88F6281	1	/* SOC Name */
 #define CONFIG_MACH_GURUPLUG	/* Machine type */
-#define CONFIG_SKIP_LOWLEVEL_INIT	/* disable board lowlevel_init */
 
 /*
  * Commands configuration
@@ -38,10 +31,10 @@
 #define CONFIG_SUPPORT_RAW_INITRD
 
 /*
- * mv-common.h should be defined after CMD configs since it used them
+ * mv-plug-common.h should be defined after CMD configs since it used them
  * to enable certain macros
  */
-#include "mv-common.h"
+#include "mv-plug-common.h"
 
 /*
  *  Environment variables configurations

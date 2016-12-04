@@ -16,11 +16,6 @@
 #define _CONFIG_GOFLEXHOME_H
 
 /*
- * Version number information
- */
-#define CONFIG_IDENT_STRING	" Arch Linux ARM\nSeagate GoFlex Home"
-
-/*
  * High Level Configuration Options (easy to change)
  */
 #define CONFIG_FEROCEON_88FR131	1	/* CPU Core subversion */
@@ -52,6 +47,7 @@
 #define CONFIG_SYS_CONSOLE_IS_IN_ENV
 
 #define CONFIG_CMD_ENV
+#define CONFIG_CMD_NAND
 #define CONFIG_CMD_IDE
 #define CONFIG_CMD_DATE
 #define CONFIG_SYS_MVFS         /* Picks up Filesystem from mv-common.h */
@@ -84,6 +80,13 @@
 /*
  * Default environment variables
  */
+#define CONFIG_BOOTCOMMAND \
+	"setenv bootargs ${console} ${mtdparts} ${bootargs_root}; " \
+	"ubi part root; " \
+	"ubifsmount ubi:root; " \
+	"ubifsload 0x800000 ${kernel}; " \
+	"bootm 0x800000"
+
 #define CONFIG_MTDPARTS \
 	"mtdparts=orion_nand:1M(u-boot),-(rootfs)\0"
 
@@ -200,15 +203,15 @@
 #endif /* CONFIG_CMD_NET */
 
 /*
- * SATA Driver configuration
- */
+ *  * SATA Driver configuration
+ *   */
 #ifdef CONFIG_MVSATA_IDE
 #define CONFIG_SYS_ATA_IDE0_OFFSET      MV_SATA_PORT0_OFFSET
 #endif /*CONFIG_MVSATA_IDE*/
 
 /*
- * RTC driver configuration
- */
+ *  * RTC driver configuration
+ *   */
 #ifdef CONFIG_CMD_DATE
 #define CONFIG_RTC_MV
 #define CONFIG_CMD_SNTP
