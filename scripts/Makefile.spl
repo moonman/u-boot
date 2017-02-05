@@ -66,10 +66,7 @@ endif
 
 libs-$(CONFIG_SPL_LIBDISK_SUPPORT) += disk/
 libs-y += drivers/
-libs-$(CONFIG_SPL_DFU_SUPPORT) += drivers/dfu/
-libs-$(CONFIG_SPL_DFU_SUPPORT) += drivers/usb/gadget/
-libs-$(CONFIG_SPL_DFU_SUPPORT) += drivers/usb/gadget/udc/
-libs-$(CONFIG_SPL_DFU_SUPPORT) += drivers/usb/dwc3/
+libs-$(CONFIG_SPL_USB_GADGET_SUPPORT) += drivers/usb/dwc3/
 libs-y += dts/
 libs-y += fs/
 libs-$(CONFIG_SPL_POST_MEM_SUPPORT) += post/drivers/
@@ -122,9 +119,11 @@ LDPPFLAGS += \
 	$(shell $(LD) --version | \
 	  sed -ne 's/GNU ld version \([0-9][0-9]*\)\.\([0-9][0-9]*\).*/-DLD_MAJOR=\1 -DLD_MINOR=\2/p')
 
+MKIMAGEOUTPUT ?= /dev/null
+
 quiet_cmd_mkimage = MKIMAGE $@
 cmd_mkimage = $(objtree)/tools/mkimage $(MKIMAGEFLAGS_$(@F)) -d $< $@ \
-	$(if $(KBUILD_VERBOSE:1=), >/dev/null)
+	$(if $(KBUILD_VERBOSE:1=), >$(MKIMAGEOUTPUT))
 
 MKIMAGEFLAGS_MLO = -T omapimage -a $(CONFIG_SPL_TEXT_BASE)
 
@@ -146,10 +145,10 @@ boot.bin: $(obj)/u-boot-spl.bin FORCE
 	$(call if_changed,mkimage)
 else
 ifdef CONFIG_ARCH_ZYNQ
-MKIMAGEFLAGS_boot.bin = -T zynqimage
+MKIMAGEFLAGS_boot.bin = -T zynqimage -R $(srctree)/$(CONFIG_BOOT_INIT_FILE)
 endif
 ifdef CONFIG_ARCH_ZYNQMP
-MKIMAGEFLAGS_boot.bin = -T zynqmpimage
+MKIMAGEFLAGS_boot.bin = -T zynqmpimage -R $(srctree)/$(CONFIG_BOOT_INIT_FILE)
 endif
 
 spl/boot.bin: $(obj)/u-boot-spl.bin FORCE
